@@ -97,10 +97,161 @@ struct OdrStop <: Exception
 end
 OdrStop() = OdrStop("OdrStop exception occurred.")
 
+
+"""
+    odr_fit(f!, xdata, ydata, beta0; kwargs...) -> OdrResult
+
+Solve a weighted orthogonal distance regression (ODR) problem, also
+known as errors-in-variables regression.
+
+# Arguments
+- `f!::Function`: Function to be fitted, with the signature `f!(x, beta, y)`.
+  It must modify `y` in-place to have the same shape as `ydata`.
+- `xdata::VecOrMat{Float64}`: Array of shape `(n,)` or `(n, m)` containing
+  the observed values of the explanatory variable(s).
+- `ydata::VecOrMat{Float64}`: Array of shape `(n,)` or `(n, q)` containing
+  the observed values of the response variable(s). When the model is explicit, `ydata` must 
+  contain a value for each observation. To ignore specific values (e.g., missing data), set the
+  corresponding entry in `weight_y` to zero. When the model is implicit, `ydata` is not used 
+  (but must be defined).
+- `beta0::Vector{Float64}`: Array of shape `(np,)` with the initial guesses of the model
+  parameters, within the optional bounds specified by `bounds`.
+
+# Keywords
+- `weight_x::Union{Float64,Vector{Float64},Matrix{Float64},Array{Float64,3},Nothing}=nothing`:
+  Scalar or array specifying how the errors on `xdata` are to be weighted. If `weight_x` is a 
+  scalar, then it is used for all data points. If `weight_x` is an array of shape `(n,)` and 
+  `m==1`, then `weight_x[i]` represents the weight for `xdata[i]`. If `weight_x` is an array of
+  shape `(m,)`, then it represents the diagonal of the covariant weighting matrix for all data
+  points. If `weight_x` is an array of shape `(m, m)`, then it represents the full covariant 
+  weighting matrix for all data points. If `weight_x` is an array of shape `(n, m)`, then 
+  `weight_x[i, :]` represents the diagonal of the covariant weighting matrix for `xdata[i, :]`.
+  If `weight_x` is an array of shape `(n, m, m)`, then `weight_x[i, :, :]` represents the full
+  covariant weighting matrix for `xdata[i, :]`. For a comprehensive description of the options,
+  refer to page 26 of the ODRPACK95 guide. By default, `weight_x` is set to one for all `xdata`
+  points.
+- `weight_y::Union{Float64,Vector{Float64},Matrix{Float64},Array{Float64,3},Nothing}=nothing`:
+  Scalar or array specifying how the errors on `ydata` are to be weighted. If `weight_y` is a 
+  scalar, then it is used for all data points. If `weight_y` is an array of shape `(n,)` and 
+  `q==1`, then `weight_y[i]` represents the weight for `ydata[i]`. If `weight_y` is an array of
+  shape `(q)`, then it represents the diagonal of the covariant weighting matrix for all data
+  points. If `weight_y` is an array of shape `(q, q)`, then it represents the full covariant 
+  weighting matrix for all data points. If `weight_y` is an array of shape `(n, q)`, then 
+  `weight_y[i, :]` represents the diagonal of the covariant weighting matrix for `ydata[i, :]`.
+  If `weight_y` is an array of shape `(n, q, q)`, then `weight_y[i, :, :]` represents the full
+  covariant weighting matrix for `ydata[i, :]`. For a comprehensive description of the options,
+  refer to page 25 of the ODRPACK95 guide. By default, `weight_y` is set to one for all `ydata`
+  points.
+- `bounds::Tuple{Union{Vector{Float64},Nothing},Union{Vector{Float64},Nothing}}=(nothing, nothing)`:
+  Tuple of arrays with the same shape as `beta0`, specifying the lower and upper bounds of the 
+  model parameters. The first array contains the lower bounds, and the second contains the upper
+  bounds. By default, the bounds are set to negative and positive infinity, respectively, for 
+  all elements of `beta`.
+- `task::String="explicit-ODR"`:
+  Specifies the regression task to be performed. `"explicit-ODR"` solves an orthogonal distance
+  regression problem with an explicit model. `"implicit-ODR"` handles models defined implicitly.
+  `"OLS"` performs ordinary least squares fitting.
+- `fix_beta::Union{Vector{Bool},Nothing}=nothing`:
+  Array with the same shape as `beta0`, specifying which elements of `beta` are to be held fixed.
+  `true` means the parameter is fixed; `false` means it is adjustable. By default, all elements
+  of `beta` are set to `false`. 
+- `fix_x::Union{VecOrMat{Bool},Nothing}=nothing`:
+  Array with the same shape as `xdata`, specifying which elements of `xdata` are to be held fixed.
+  Alternatively, it can be a rank-1 array of shape `(m,)` or `(n,)`, in which case it will be 
+  broadcast along the other axis. `true` means the element is fixed; `false` means it is adjustable.
+  By default, in orthogonal distance regression mode, all elements of `fix_x` are set to `false`.
+  In ordinary least squares mode (`task="OLS"`), all `xdata` values are automatically treated 
+  as fixed.
+- `jac_beta!::Union{Function,Nothing}=nothing`:
+  Jacobian of the function to be fitted with respect to `beta`, with the signature `jac_beta!(x, beta, jb)`.
+  It must modify the result `jb` in-place, with shape `(n, np, q)`. By default, the Jacobian is
+  approximated numerically using the finite difference scheme specified by `diff_scheme`.
+- `jac_x!::Union{Function,Nothing}=nothing`:
+  Jacobian of the function to be fitted with respect to `x`, with the signature `jac_x!(x, beta, jx)`.
+  It must modify the result `jx` in-place, with shape `(n, m, q)`. By default, the Jacobian is 
+  approximated numerically using the finite difference scheme specified by `diff_scheme`.
+- `delta0::Union{VecOrMat{Float64},Nothing}=nothing`:
+  Array with the same shape as `xdata`, containing the initial guesses of the errors in the 
+  explanatory variable. By default, `delta0` is set to zero for all elements of `xdata`.
+- `diff_scheme::String="forward"`:
+  Finite difference scheme used to approximate the Jacobian matrices when the user does not 
+  provide `jac_beta!` and `jac_x!`. The default method is forward differences. Central 
+  differences are generally more accurate but require one additional `f!` evaluation per partial
+  derivative.
+- `report::String="none"`:
+  Specifies the level of computation reporting. `"none"` disables all output. `"short"` prints 
+  a brief initial and final summary. `"long"` provides a detailed initial and final summary. 
+  `"iteration"` outputs information at each iteration step in addition to the detailed summaries.
+  This is useful for debugging or monitoring progress.
+- `maxit::Integer=50`:
+  Maximum number of allowed iterations.
+- `ndigit::Union{Integer,Nothing}=nothing`: Number of reliable decimal digits in the values 
+  computed by the model function `f!` and its Jacobians `jac_beta!`, and `jac_x!`. By default,
+  the value is numerically determined by evaluating `f!`. 
+- `taufac::Union{Float64,Nothing}=nothing`:
+  Factor ranging from 0 to 1 to initialize the trust region radius. The default value is 1. 
+  Reducing `taufac` may be appropriate if, at the first iteration, the computed results for the
+  full Gauss-Newton step cause an overflow, or cause `beta` and/or `delta` to leave the region
+  of interest. 
+- `sstol::Union{Float64,Nothing}=nothing`:
+  Factor ranging from 0 to 1 specifying the stopping tolerance for the sum of the squares 
+  convergence. The default value is `eps()^(1/2)`, where `eps()` is the machine precision in 
+  `Float64`.
+- `partol::Union{Float64,Nothing}=nothing`:
+  Factor ranging from 0 to 1 specifying the stopping tolerance for parameter convergence 
+  (i.e., `beta` and `delta`). When the model is explicit, the default value is `eps()^(2/3)`, 
+  and when the model is implicit, the default value is `eps()^(1/3)`, where `eps()` is the machine
+  precision in `Float64`.
+- `step_beta::Union{Vector{Float64},Nothing}=nothing`:
+  Array with the same shape as `beta0` containing the _relative_ step sizes used to compute the
+  finite difference derivatives with respect to the model parameters. By default, the step size
+  is set internally based on the value of `ndigit` and the type of finite differences specified
+  by `diff_scheme`. For additional details, refer to pages 31 and 78 of the ODRPACK95 guide.
+- `step_delta::Union{VecOrMat{Float64},Nothing}=nothing`:
+  Array with the same shape as `xdata`, containing the _relative_ step sizes used to compute the
+  finite difference derivatives with respect to the errors in the explanatory variable. 
+  Alternatively, it can be a rank-1 array of shape `(m,)` or `(n,)`, in which case it will be 
+  broadcast along the other axis. By default, step size is set internally based on the value
+  of `ndigit` and the type of finite differences specified by `diff_scheme`. For additional 
+  details, refer to pages 31 and 78 of the ODRPACK95 guide.
+- `scale_beta::Union{Vector{Float64},Nothing}=nothing`:
+  Array with the same shape as `beta0` containing the scale values of the model parameters. 
+  Scaling is used to improve the numerical stability of the regression, but does not affect the
+  problem specification. Scaling should not be confused with the weighting matrices `weight_x` 
+  and `weight_y`. By default, the scale is set internally based on the relative magnitudes of 
+  `beta`. For further details, refer to pages 32 and 84 of the ODRPACK95 guide.
+- `scale_delta::Union{VecOrMat{Float64},Nothing}=nothing`:
+  Array with the same shape as `xdata`, containing the scale values of the errors in the 
+  explanatory variable. Alternatively, it can be a rank-1 array of shape `(m,)` or `(n,)`, in 
+  which case it will be broadcast along the other axis. Scaling is used to improve the numerical
+  stability of the regression, but does not affect the problem specification. Scaling should 
+  not be confused with the weighting matrices `weight_x` and `weight_y`. By default, the scale 
+  is set internally based on the relative magnitudes of `xdata`. For further details, refer to 
+  pages 32 and 85 of the ODRPACK95 guide.
+- `rptfile::Union{String,Nothing}=nothing`:
+  File name for storing the computation reports, as defined by `report`. By default, the reports
+  are sent to standard output.
+- `errfile::Union{String,Nothing}=nothing`:
+  File name for storing the error reports, as defined by `report`. By default, the reports are 
+  sent to standard output.
+
+# Returns
+- `OdrResult`: An object containing the results of the regression.
+
+# References
+[1] Jason W. Zwolak, Paul T. Boggs, and Layne T. Watson.
+    Algorithm 869: ODRPACK95: A weighted orthogonal distance regression code 
+    with bound constraints. ACM Trans. Math. Softw. 33, 4 (August 2007), 27-es.
+    https://doi.org/10.1145/1268776.1268782
+
+[2] Jason W. Zwolak, Paul T. Boggs, and Layne T. Watson. User's Reference
+    Guide for ODRPACK95, 2005.
+    https://github.com/HugoMVale/odrpack95/blob/main/original/Doc/guide.pdf
+"""
 function odr_fit(
     f!::Function,
-    xdata::Union{Vector{Float64},Matrix{Float64}},
-    ydata::Union{Vector{Float64},Matrix{Float64}},
+    xdata::VecOrMat{Float64},
+    ydata::VecOrMat{Float64},
     beta0::Vector{Float64};
     #
     weight_x::Union{Float64,Vector{Float64},Matrix{Float64},Array{Float64,3},Nothing}=nothing,
@@ -108,10 +259,10 @@ function odr_fit(
     bounds::Tuple{Union{Vector{Float64},Nothing},Union{Vector{Float64},Nothing}}=(nothing, nothing),
     task::String="explicit-ODR",
     fix_beta::Union{Vector{Bool},Nothing}=nothing,
-    fix_x::Union{Vector{Bool},Matrix{Bool},Nothing}=nothing,
+    fix_x::Union{VecOrMat{Bool},Nothing}=nothing,
     jac_beta!::Union{Function,Nothing}=nothing,
     jac_x!::Union{Function,Nothing}=nothing,
-    delta0::Union{Vector{Float64},Matrix{Float64},Nothing}=nothing,
+    delta0::Union{VecOrMat{Float64},Nothing}=nothing,
     diff_scheme::String="forward",
     report::String="none",
     maxit::Integer=50,
@@ -120,9 +271,9 @@ function odr_fit(
     sstol::Union{Float64,Nothing}=nothing,
     partol::Union{Float64,Nothing}=nothing,
     step_beta::Union{Vector{Float64},Nothing}=nothing,
-    step_delta::Union{Vector{Float64},Matrix{Float64},Nothing}=nothing,
+    step_delta::Union{VecOrMat{Float64},Nothing}=nothing,
     scale_beta::Union{Vector{Float64},Nothing}=nothing,
-    scale_delta::Union{Vector{Float64},Matrix{Float64},Nothing}=nothing,
+    scale_delta::Union{VecOrMat{Float64},Nothing}=nothing,
     rptfile::Union{String,Nothing}=nothing,
     errfile::Union{String,Nothing}=nothing
 )::OdrResult
