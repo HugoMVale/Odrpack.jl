@@ -1,3 +1,0 @@
-[submodule "deps/odrpack95"]
-	path = deps/odrpack95
-	url = https://github.com/HugoMVale/odrpack95.git
