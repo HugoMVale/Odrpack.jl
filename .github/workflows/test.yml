@@ -33,14 +33,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install system dependencies (OpenBLAS)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libopenblas-dev
+
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
 
-      - uses: julia-actions/cache@v2
-        with:
-          cache-key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.version }}
-
       - uses: julia-actions/julia-buildpkg@v1
-
       - uses: julia-actions/julia-runtest@v1
