@@ -1,7 +1,7 @@
 using Test
-using OdrpackAux
+using Odrpack
 
-@testitem "workspace_dimensions" begin
+@testset "workspace_dimensions" begin
     n = 10
     q = 2
     m = 3
@@ -14,7 +14,7 @@ using OdrpackAux
     @test liwork == 46
 end
 
-@testitem "loc_iwork" begin
+@testset "loc_iwork" begin
     m, q, npar = 10, 2, 5
 
     iwi = Odrpack.loc_iwork(m, q, npar)
@@ -26,7 +26,7 @@ end
     end
 end
 
-@testitem "loc_rwork" begin
+@testset "loc_rwork" begin
     n = 10
     m = 2
     q = 2
@@ -37,18 +37,14 @@ end
 
     rwi = Odrpack.loc_rwork(n, m, q, npar, ldwe, ld2we, isodr)
 
-    # The struct has 52 fields
     @test length(fieldnames(typeof(rwi))) == 52
-
-    # Check all fields are non-negative
-    all_nonneg = all(getfield(rwi, f) >= 0 for f in fieldnames(typeof(rwi)))
-    @test all_nonneg
-
+    all_positive = all(getfield(rwi, f) >= 0 for f in fieldnames(typeof(rwi)))
+    @test all_positive
 end
 
-@testitem "open_file and close_file" begin
+@testset "open_file and close_file" begin
     tmpfile = tempname()
-    lun = Ref{Cint}(0)  # arbitrary logical unit number
+    lun = Ref{Cint}(0)
 
     ierr_open = Odrpack.open_file(tmpfile, lun)
     @test ierr_open == 0
