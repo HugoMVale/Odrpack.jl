@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    tags:
-      - '*'
   pull_request:
     branches:
       - main
@@ -16,16 +14,21 @@ jobs:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         version:
-          - '1.6' # LTS
-          - '1.9' # Current stable
-          - '1'   # Latest stable
+          - 'lts'
+          - '1.10'
         os:
           - ubuntu-latest
-          - windows-latest
-          - macOS-latest
-      fail-fast: false # Don't cancel other matrix jobs if one fails
+          #- windows-latest
+          #- macOS-latest
+        exclude:
+          - os: macOS-latest
+            version: 'lts'
+        include:
+          - os: macOS-13
+            version: 'lts'
 
     steps:
       - uses: actions/checkout@v4
