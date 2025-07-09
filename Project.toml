@@ -2,10 +2,3 @@ name = "Odrpack"
 uuid = "8771e72f-1726-44cc-8528-8e528679e212"
 authors = ["HugoMVale <57530119+HugoMVale@users.noreply.github.com>"]
 version = "0.1.0"
-
-# [extras]
-# Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-# Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-# [targets]
-test = ["Test", "Random"]
