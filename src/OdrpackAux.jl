@@ -13,7 +13,7 @@ export workspace_dimensions, loc_iwork, loc_rwork, open_file, close_file, libodr
 
 Path to the shared library, which is used internally by the `Odrpack` package.
 """
-const libodrpack = joinpath(@__DIR__, "./libodrpack95.so")
+const libodrpack = joinpath(@__DIR__, "../deps/libodrpack95.so")
 
 """
     workspace_dimensions(n, m, q, np, isodr) -> Tuple{Int32, Int32}
