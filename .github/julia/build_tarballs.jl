@@ -12,6 +12,10 @@ platforms = [
     Platform("x86_64", "linux"; libc="glibc")
 ]
 
+products = [
+    LibraryProduct("libodrpack95", :libodrpack)
+]
+
 dependencies = [
     Dependency("OpenBLAS_jll")
 ]
@@ -33,11 +37,5 @@ meson compile -C builddir -j${nproc}
 meson install -C builddir
 """
 
-build_tarballs(ARGS,
-    name,
-    version,
-    sources,
-    script,
-    platforms,
-    dependencies
-)
+build_tarballs(ARGS, name, version, sources, script, platforms, products, dependencies;
+    julia_compat="1.6")
