@@ -33,4 +33,11 @@ meson compile -C builddir -j${nproc}
 meson install -C builddir
 """
 
-build_tarballs(ARGS, name, version, sources, script, platforms; dependencies)
+build_tarballs(ARGS;
+    name=name,
+    version=version,
+    sources=sources,
+    script=script,
+    platforms=platforms,
+    dependencies=dependencies
+)
