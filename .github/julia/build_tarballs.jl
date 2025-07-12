@@ -13,7 +13,7 @@ platforms = [
 ]
 
 products = [
-    LibraryProduct("libodrpack95", :libodrpack)
+    LibraryProduct("libodrpack95", :libodrpack95)
 ]
 
 dependencies = [
