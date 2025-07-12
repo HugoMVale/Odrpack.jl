@@ -17,8 +17,7 @@ products = [
 ]
 
 dependencies = [
-    # Dependency("OpenBLAS_jll")
-    Dependency(PackageSpec(name="CompilerSupportLibraries_jll", uuid="e66e0078-7015-5450-92f7-15fbd957f2ae"))
+    Dependency("CompilerSupportLibraries_jll")
 ]
 
 script = raw"""
