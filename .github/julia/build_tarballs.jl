@@ -9,11 +9,12 @@ sources = [
 ]
 
 platforms = [
-    Platform("x86_64", "linux"; libc="glibc")
+    Platform("x86_64", "windows")
+    # Platform("x86_64", "linux"; libc="glibc")
 ]
 
-platforms = expand_gfortran_versions(platforms)
-platforms = expand_cxxstring_abis(platforms)
+# platforms = expand_gfortran_versions(platforms)
+# platforms = expand_cxxstring_abis(platforms)
 
 products = [
     LibraryProduct("libodrpack95", :libodrpack95)
