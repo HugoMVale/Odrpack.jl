@@ -30,7 +30,7 @@ jobs:
           PACKAGE=Odrpack_jll
           PLATFORM=x86_64-linux-gnu
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
-          julia --color=yes .github/julia/build_tarballs.jl ${PLATFORM} --verbose --deploy=local
+          julia --color=yes .github/julia/build_tarballs.jl --verbose --deploy=local
           file=/home/runner/.julia/dev/${PACKAGE}/Artifacts.toml
           sha1=$(grep '^git-tree-sha1' "$file" | cut -d '"' -f2)
           echo "ARTIFACT_SHA=${sha1}" >> $GITHUB_ENV
