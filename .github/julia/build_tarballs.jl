@@ -5,16 +5,13 @@ version = v"2.0.1"
 
 # Collection of sources required to build ECOSBuilder
 sources = [
-    GitSource("https://github.com/HugoMVale/odrpack95.git", "e440c9dc220a6d74e251181c8eb9e8fd430a64b4")
+    GitSource("https://github.com/HugoMVale/odrpack95.git", "54e58ae7f56564e358fb097f2108e4112498fce9")
 ]
 
 platforms = [
-    Platform("x86_64", "windows")
-    # Platform("x86_64", "linux"; libc="glibc")
+    # Platform("x86_64", "windows")
+    Platform("x86_64", "linux"; libc="glibc")
 ]
-
-# platforms = expand_gfortran_versions(platforms)
-# platforms = expand_cxxstring_abis(platforms)
 
 products = [
     LibraryProduct("libodrpack95", :libodrpack95)
@@ -42,4 +39,4 @@ meson install -C builddir
 """
 
 build_tarballs(ARGS, name, version, sources, script, platforms, products, dependencies;
-    julia_compat="1.6", preferred_gcc_version=v"13")
+    julia_compat="1.6", preferred_gcc_version=v"14")
