@@ -30,12 +30,11 @@ export PKG_CONFIG_PATH="${prefix}/lib/pkgconfig"
 # Optional: show what pkg-config sees
 pkg-config --list-all | grep blas || true
 
-# Configure Meson
-meson setup builddir --prefix=$prefix --libdir=lib -Dbuild_shared=true
-
-# Build and install
-meson compile -C builddir -j${nproc}
-meson install -C builddir
+# Configure Meson, build and install
+mkdir build && cd build
+meson .. --cross-file="${MESON_TARGET_TOOLCHAIN}" -Dbuild_shared=true
+ninja -j${nproc}
+ninja install
 """
 
 build_tarballs(ARGS, name, version, sources, script, platforms, products, dependencies;
