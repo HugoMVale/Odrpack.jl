@@ -58,8 +58,8 @@ jobs:
       - name: Override Odrpack_jll artifact path
         shell: julia --color=yes --project=. {0}
         run: |
-          import Odrpack_jll
-          artifact_dir = Odrpack_jll.artifact_dir
+          import odrpack95_jll
+          artifact_dir = odrpack95_jll.artifact_dir
           sha = last(splitpath(artifact_dir))
           dir = escape_string(joinpath(ENV["GITHUB_WORKSPACE"], "override"))
           content = "$sha = \"$(dir)\"\n"
