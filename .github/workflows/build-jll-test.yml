@@ -27,7 +27,7 @@ jobs:
 
       - name: Build Odrpack_jll artifact
         run: |
-          PACKAGE=Odrpack_jll
+          PACKAGE=odrpack95_jll
           PLATFORM=x86_64-linux-gnu
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
           julia --color=yes .github/julia/build_tarballs.jl --verbose --deploy=local
