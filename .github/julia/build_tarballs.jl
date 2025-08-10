@@ -8,7 +8,9 @@ sources = [
     "6f5d1ff1541c29a6978eabaf60975ed5a8c68943") # tag=v2.0.3
 ]
 
-platforms = supported_platforms()
+platforms = [
+    Platform("x86_64", "linux"; libc="glibc")
+]
 
 platforms = filter(p -> !(libc(p) == "musl"), platforms)
 platforms = expand_gfortran_versions(platforms)
