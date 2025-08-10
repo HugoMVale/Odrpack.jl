@@ -25,9 +25,9 @@ jobs:
 
       - uses: julia-actions/cache@v2
 
-      - name: Build Odrpack_jll artifact
+      - name: Build odrpack_jll artifact
         run: |
-          PACKAGE=odrpack95_jll
+          PACKAGE=odrpack_jll
           PLATFORM=x86_64-linux-gnu
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
           julia --color=yes .github/julia/build_tarballs.jl --verbose --deploy=local
@@ -55,11 +55,11 @@ jobs:
           name: artifacts
           path: override
 
-      - name: Override Odrpack_jll artifact path
+      - name: Override odrpack_jll artifact path
         shell: julia --color=yes --project=. {0}
         run: |
-          import odrpack95_jll
-          artifact_dir = odrpack95_jll.artifact_dir
+          import odrpack_jll
+          artifact_dir = odrpack_jll.artifact_dir
           sha = last(splitpath(artifact_dir))
           dir = escape_string(joinpath(ENV["GITHUB_WORKSPACE"], "override"))
           content = "$sha = \"$(dir)\"\n"
