@@ -625,7 +625,7 @@ function odr_fit(
 
     # Call the Fortran function
     info = Ref{Cint}(-1)
-    @ccall libodrpack.odr_long_c(
+    @ccall odrpack.odr_long_c(
         fcn_c::Ptr{Cvoid},
         n::Ref{Cint},
         m::Ref{Cint},
