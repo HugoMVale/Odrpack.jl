@@ -6,14 +6,11 @@ This module provides a Julia interface to the auxiliary routines from the
 """
 module OdrpackAux
 
-export workspace_dimensions, loc_iwork, loc_rwork, open_file, close_file, libodrpack
+import odrpack_jll
+const odrpack = odrpack_jll.libodrpack95
 
-"""
-    libodrpack
+export workspace_dimensions, loc_iwork, loc_rwork, open_file, close_file, odrpack
 
-Path to the shared library, which is used internally by the `Odrpack` package.
-"""
-const libodrpack = joinpath(@__DIR__, "../deps/libodrpack95.so")
 
 """
     workspace_dimensions(n, m, q, np, isodr) -> Tuple{Int32, Int32}
@@ -35,7 +32,7 @@ function workspace_dimensions(n::Integer, m::Integer, q::Integer, np::Integer, i
     lrwork = Ref{Int32}()
     liwork = Ref{Int32}()
 
-    @ccall libodrpack.workspace_dimensions_c(
+    @ccall odrpack.workspace_dimensions_c(
         n::Ref{Cint},
         m::Ref{Cint},
         q::Ref{Cint},
@@ -93,7 +90,7 @@ function loc_iwork(m::Integer, q::Integer, np::Integer)::Iworkidx
 
     iwi = Ref{Iworkidx}()
 
-    @ccall libodrpack.loc_iwork_c(
+    @ccall odrpack.loc_iwork_c(
         m::Ref{Cint},
         q::Ref{Cint},
         np::Ref{Cint},
@@ -180,7 +177,7 @@ function loc_rwork(n::Integer, m::Integer, q::Integer, np::Integer, ldwe::Intege
 
     rwi = Ref{Rworkidx}()
 
-    @ccall libodrpack.loc_rwork_c(
+    @ccall odrpack.loc_rwork_c(
         n::Ref{Cint},
         m::Ref{Cint},
         q::Ref{Cint},
@@ -211,7 +208,7 @@ function open_file(filename::AbstractString, lun::Ref{Int32})::Int32
 
     ierr = Ref{Int32}(0)
 
-    @ccall libodrpack.open_file(
+    @ccall odrpack.open_file(
         filename::Cstring,
         lun::Ref{Cint},
         ierr::Ref{Cint}
@@ -237,7 +234,7 @@ function close_file(lun::Ref{Int32})::Int32
 
     ierr = Ref{Int32}(0)
 
-    @ccall libodrpack.close_file(
+    @ccall odrpack.close_file(
         lun::Ref{Cint},
         ierr::Ref{Cint}
     )::Cvoid
