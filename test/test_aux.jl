@@ -1,7 +1,4 @@
-using Test
-using Odrpack
-
-@testset "workspace_dimensions" begin
+@testitem "workspace_dimensions" begin
     n = 10
     q = 2
     m = 3
@@ -14,7 +11,7 @@ using Odrpack
     @test liwork == 46
 end
 
-@testset "loc_iwork" begin
+@testitem "loc_iwork" begin
     m, q, npar = 10, 2, 5
 
     iwi = Odrpack.loc_iwork(m, q, npar)
@@ -26,7 +23,7 @@ end
     end
 end
 
-@testset "loc_rwork" begin
+@testitem "loc_rwork" begin
     n = 10
     m = 2
     q = 2
@@ -42,7 +39,7 @@ end
     @test all_positive
 end
 
-@testset "open_file and close_file" begin
+@testitem "open_file and close_file" begin
     tmpfile = tempname()
     lun = Ref{Cint}(0)
 
