@@ -1,5 +1,7 @@
 # Odrpack.jl
 
+[![Test](https://github.com/HugoMVale/Odrpack.jl/actions/workflows/test.yml/badge.svg)](https://github.com/HugoMVale/Odrpack.jl/actions)
+
 ## Description
 
 This Julia package provides bindings for the well-known weighted orthogonal distance regression
@@ -63,3 +65,4 @@ Optimized β    :[1.633376, 0.9]
 Optimized δ    :[-0.368861, -0.312730, 0.029286, 0.110314]
 Optimized x + δ:[0.613138, 1.685269, 5.007286, 6.120314]
 ```
+
