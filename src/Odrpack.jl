@@ -258,8 +258,8 @@ function odr_fit(
     weight_y::Union{Float64,Vector{Float64},Matrix{Float64},Array{Float64,3},Nothing}=nothing,
     bounds::Tuple{Union{Vector{Float64},Nothing},Union{Vector{Float64},Nothing}}=(nothing, nothing),
     task::String="explicit-ODR",
-    fix_beta::Union{Vector{Bool},Nothing}=nothing,
-    fix_x::Union{VecOrMat{Bool},Nothing}=nothing,
+    fix_beta::Union{AbstractVector{Bool},Nothing}=nothing,
+    fix_x::Union{AbstractVecOrMat{Bool},Nothing}=nothing,
     jac_beta!::Union{Function,Nothing}=nothing,
     jac_x!::Union{Function,Nothing}=nothing,
     delta0::Union{VecOrMat{Float64},Nothing}=nothing,
@@ -295,7 +295,7 @@ function odr_fit(
     end
 
     n = size(xdata, 1)
-    size(ydata, 1) == n || error("The first dimension of `xdata` and `ydata` must be identical, but size(xdata)=$(size(xdata)) and size(ydata)=$(size(ydata)).")
+    size(ydata, 1) == n || throw(ArgumentError("The first dimension of `xdata` and `ydata` must be identical, but size(xdata)=$(size(xdata)) and size(ydata)=$(size(ydata))."))
 
     # Copy beta0
     np = length(beta0)
@@ -305,32 +305,32 @@ function odr_fit(
     lower, upper = bounds
 
     if lower !== nothing
-        size(lower) == size(beta0) || error("The lower bound must have the same length as `beta0`.")
-        all(lower .< beta0) || error("The lower bound must be less than `beta0`.")
+        size(lower) == size(beta0) || throw(ArgumentErrorerror("The lower bound must have the same length as `beta0`."))
+        all(lower .< beta0) || throw(ArgumentError("The lower bound must be less than `beta0`."))
     end
 
     if upper !== nothing
-        size(upper) == size(beta0) || error("The upper bound must have the same length as `beta0`.")
-        all(upper .> beta0) || error("The upper bound must be greater than `beta0`.")
+        size(upper) == size(beta0) || throw(ArgumentError("The upper bound must have the same length as `beta0`."))
+        all(upper .> beta0) || throw(ArgumentError("The upper bound must be greater than `beta0`."))
     end
 
     # Check other beta-related arguments
     if fix_beta !== nothing
-        size(fix_beta) == size(beta0) || error("`fix_beta` must have the same shape as `beta0`.")
+        size(fix_beta) == size(beta0) || throw(ArgumentError("`fix_beta` must have the same shape as `beta0`."))
     end
 
     if step_beta !== nothing
-        size(step_beta) == size(beta0) || error("`step_beta` must have the same shape as `beta0`.")
+        size(step_beta) == size(beta0) || throw(ArgumentError("`step_beta` must have the same shape as `beta0`."))
     end
 
     if scale_beta !== nothing
-        size(scale_beta) == size(beta0) || error("`scale_beta` must have the same shape as `beta0`.")
+        size(scale_beta) == size(beta0) || throw(ArgumentError("`scale_beta` must have the same shape as `beta0`."))
     end
 
     # Check delta0
     has_delta0 = false
     if delta0 !== nothing
-        size(delta0) == size(xdata) || error("`delta0` must have the same shape as `xdata`.")
+        size(delta0) == size(xdata) || throw(ArgumentError("`delta0` must have the same shape as `xdata`."))
         delta = copy(delta0)
         has_delta0 = true
     else
@@ -348,7 +348,7 @@ function odr_fit(
             ldifx = n
             fix_x = repeat(fix_x, 1, m)
         else
-            error("`fix_x` must either have the same shape as `xdata` or be a vector of length `m` or `n`. See page 26 of the ODRPACK95 User Guide.")
+            throw(ArgumentError("`fix_x` must either have the same shape as `xdata` or be a vector of length `m` or `n`. See page 26 of the ODRPACK95 User Guide."))
         end
     end
 
@@ -363,7 +363,7 @@ function odr_fit(
             ldstpd = n
             step_delta = repeat(step_delta, 1, m)
         else
-            error("`step_delta` must either have the same shape as `xdata` or be a vector of length `m` or `n`. See page 31 of the ODRPACK95 User Guide.")
+            throw(ArgumentError("`step_delta` must either have the same shape as `xdata` or be a vector of length `m` or `n`. See page 31 of the ODRPACK95 User Guide."))
         end
     end
 
@@ -378,7 +378,7 @@ function odr_fit(
             ldscld = n
             scale_delta = repeat(scale_delta, 1, m)
         else
-            error("`scale_delta` must either have the same shape as `xdata` or be a vector of length `m` or `n`. See page 32 of the ODRPACK95 User Guide.")
+            throw(ArgumentError("`scale_delta` must either have the same shape as `xdata` or be a vector of length `m` or `n`. See page 32 of the ODRPACK95 User Guide."))
         end
     end
 
@@ -405,13 +405,13 @@ function odr_fit(
                 ldwd = wx_shape[1]
                 ld2wd = wx_shape[2]
             else
-                error("Invalid shape for `weight_x`: $wx_shape. Expected one of " *
-                      " `(m,)`, `(n,)`, `(m, m)`, `(n, m)`, " *
-                      " `(1, 1, m)`, `(n, 1, m)`, `(1, m, m)`, or `(n, m, m)`. " *
-                      "See page 26 of the ODRPACK95 User Guide.")
+                throw(ArgumentError("Invalid shape for `weight_x`: $wx_shape. Expected one of " *
+                                    " `(m,)`, `(n,)`, `(m, m)`, `(n, m)`, " *
+                                    " `(1, 1, m)`, `(n, 1, m)`, `(1, m, m)`, or `(n, m, m)`. " *
+                                    "See page 26 of the ODRPACK95 User Guide."))
             end
         else
-            error("`weight_x` must be a real number or an array.")
+            throw(ArgumentError("`weight_x` must be a real number or an array."))
         end
     end
 
@@ -438,13 +438,13 @@ function odr_fit(
                 ldwe = wy_shape[1]
                 ld2we = wy_shape[2]
             else
-                error("Invalid shape for `weight_y`: $wy_shape. Expected one of " *
-                      " `(q,)`, `(n,)`, `(q, q)`, `(n, q)`, " *
-                      " `(1, 1, q)`, `(n, 1, q)`, `(1, q, q)`, or `(n, q, q)`. " *
-                      "See page 26 of the ODRPACK95 User Guide.")
+                throw(ArgumentError("Invalid shape for `weight_y`: $wy_shape. Expected one of " *
+                                    " `(q,)`, `(n,)`, `(q, q)`, `(n, q)`, " *
+                                    " `(1, 1, q)`, `(n, 1, q)`, `(1, q, q)`, or `(n, q, q)`. " *
+                                    "See page 26 of the ODRPACK95 User Guide."))
             end
         else
-            error("`weight_y` must be a real number or an array.")
+            throw(ArgumentError("`weight_y` must be a real number or an array."))
         end
     end
 
@@ -457,7 +457,7 @@ function odr_fit(
     elseif jac_beta! !== nothing && jac_x! === nothing && task == "OLS"
         has_jac = true
     else
-        error("Invalid combination of `jac_beta!` and `jac_x!`.")
+        throw(ArgumentError("Invalid combination of `jac_beta!` and `jac_x!`."))
     end
 
     # Convert fix to ifix
@@ -485,7 +485,7 @@ function odr_fit(
         jobl[1] = 2
         is_odr = false
     else
-        error("Invalid value for `task`: $(task).")
+        throw(ArgumentError("Invalid value for `task`: $(task)."))
     end
 
     if has_jac
@@ -496,7 +496,7 @@ function odr_fit(
         elseif diff_scheme == "central"
             jobl[2] = 1
         else
-            error("Invalid value for `diff_scheme`: $(diff_scheme).")
+            throw(ArgumentError("Invalid value for `diff_scheme`: $(diff_scheme)."))
         end
     end
 
