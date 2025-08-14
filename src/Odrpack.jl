@@ -697,7 +697,7 @@ function odr_fit(
 
     # Return OdrResult   
     return OdrResult(
-        beta,
+        copy(beta),
         delta,
         eps,
         xdata + delta,
