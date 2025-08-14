@@ -305,7 +305,7 @@ function odr_fit(
     lower, upper = bounds
 
     if lower !== nothing
-        size(lower) == size(beta0) || throw(ArgumentErrorerror("The lower bound must have the same length as `beta0`."))
+        size(lower) == size(beta0) || throw(ArgumentError("The lower bound must have the same length as `beta0`."))
         all(lower .< beta0) || throw(ArgumentError("The lower bound must be less than `beta0`."))
     end
 
