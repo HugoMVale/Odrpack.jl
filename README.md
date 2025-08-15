@@ -43,15 +43,14 @@ xdata = [0.982, 1.998, 4.978, 6.01]
 ydata = [2.7, 7.4, 148.0, 403.0]
 
 beta0 = [2.0, 0.5]
-lower = [0.0, 0.0]
-upper = [10.0, 0.9]
+bounds = ([0.0, 0.0], [10.0, 0.9])
 
 sol = odr_fit(
     f!,
     xdata,
     ydata,
     beta0,
-    bounds=(lower, upper),
+    bounds=bounds,
     # rptfile="test_output.txt",
     # report="long"
 )
