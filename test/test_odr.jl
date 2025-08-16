@@ -83,28 +83,28 @@ using .TestCases
 @testset "base-cases" begin
 
     # Case 1
-    sol1 = Odrpack.odr_fit(case1...)
+    sol1 = odr_fit(case1...)
     @test sol1.success
     @test sol1.info == 1
 
     # Case 2
-    sol2 = Odrpack.odr_fit(case2...)
+    sol2 = odr_fit(case2...)
     @test sol2.success
     @test sol2.info == 1
 
     # Case 3
-    sol3 = Odrpack.odr_fit(case3...)
+    sol3 = odr_fit(case3...)
     @test sol3.success
     @test sol3.info == 1
 
     # x and y don't have the same first dimension
     @test_throws ArgumentError begin
-        Odrpack.odr_fit(case1.f, ones(length(case1.xdata) + 1), case1.ydata, case1.beta0)
+        odr_fit(case1.f, ones(length(case1.xdata) + 1), case1.ydata, case1.beta0)
     end
 
     # invalid task
     @test_throws ArgumentError begin
-        Odrpack.odr_fit(case1..., task="invalid")
+        odr_fit(case1..., task="invalid")
     end
 
 end # "base-cases"
@@ -112,24 +112,24 @@ end # "base-cases"
 @testset "beta-related" begin
 
     # base case1
-    sol1 = Odrpack.odr_fit(case1...)
+    sol1 = odr_fit(case1...)
     @test sol1.success
 
     # fix some parameters
-    sol = Odrpack.odr_fit(case1..., fix_beta=[true, false, false, true])
+    sol = odr_fit(case1..., fix_beta=[true, false, false, true])
     @test sol.beta[[1, 4]] ≈ [0.0, 0.0]
 
     # fix all parameters
-    sol = Odrpack.odr_fit(case1..., fix_beta=trues(length(case1.beta0)))
+    sol = odr_fit(case1..., fix_beta=trues(length(case1.beta0)))
     @test sol.beta ≈ zeros(length(sol.beta))
 
     # user-defined step_beta
-    sol = Odrpack.odr_fit(case1..., step_beta=1e-5 * ones(length(case1.beta0)))
+    sol = odr_fit(case1..., step_beta=1e-5 * ones(length(case1.beta0)))
     @test sol.success
     @test all(isapprox.(sol.beta, sol1.beta, rtol=1e-5))
 
     # user-defined scale_beta
-    sol = Odrpack.odr_fit(case1..., scale_beta=[2.0, 2.0, 20.0, 20.0])
+    sol = odr_fit(case1..., scale_beta=[2.0, 2.0, 20.0, 20.0])
     @test sol.success
     @test all(isapprox.(sol.beta, sol1.beta, rtol=1e-5))
 
@@ -137,41 +137,41 @@ end # "base-cases"
     @test_throws ArgumentError begin
         lower = copy(case1.beta0)
         lower[2:end] .-= 1.0
-        Odrpack.odr_fit(case1..., bounds=(lower, nothing))
+        odr_fit(case1..., bounds=(lower, nothing))
     end
 
     # upper <= beta0
     @test_throws ArgumentError begin
         upper = copy(case1.beta0)
         upper[2:end] .+= 1.0
-        Odrpack.odr_fit(case1..., bounds=(nothing, upper))
+        odr_fit(case1..., bounds=(nothing, upper))
     end
 
     # invalid lower shape
     @test_throws ArgumentError begin
         lower = -1e99 * ones(length(case1.beta0) + 1)
-        Odrpack.odr_fit(case1..., bounds=(lower, nothing))
+        odr_fit(case1..., bounds=(lower, nothing))
     end
 
     # invalid upper shape
     @test_throws ArgumentError begin
         upper = 1e99 * ones(length(case1.beta0) + 1)
-        Odrpack.odr_fit(case1..., bounds=(nothing, upper))
+        odr_fit(case1..., bounds=(nothing, upper))
     end
 
     # invalid fix_beta shape
     @test_throws ArgumentError begin
-        Odrpack.odr_fit(case1..., fix_beta=[true, false, true])
+        odr_fit(case1..., fix_beta=[true, false, true])
     end
 
     # invalid step_beta shape
     @test_throws ArgumentError begin
-        Odrpack.odr_fit(case1..., step_beta=[1e-5, 1e-5])
+        odr_fit(case1..., step_beta=[1e-5, 1e-5])
     end
 
     # invalid scale_beta shape
     @test_throws ArgumentError begin
-        Odrpack.odr_fit(case1..., scale_beta=[1.0, 2.0])
+        odr_fit(case1..., scale_beta=[1.0, 2.0])
     end
 
 end # "beta-related"
@@ -179,66 +179,66 @@ end # "beta-related"
 @testset "delta0-related" begin
 
     # base case1
-    sol1 = Odrpack.odr_fit(case1...)
+    sol1 = odr_fit(case1...)
     @test sol1.success
 
     # user-defined delta0=0
-    sol = Odrpack.odr_fit(case1..., delta0=zeros(size(case1.xdata)))
+    sol = odr_fit(case1..., delta0=zeros(size(case1.xdata)))
     @test sol.success
     @test sol.delta ≈ sol1.delta
 
-    # user-defined delta0 != 0
-    sol = Odrpack.odr_fit(case1..., delta0=ones(size(case1.xdata)))
+    # user-defined delta0!=0
+    sol = odr_fit(case1..., delta0=ones(size(case1.xdata)))
     @test sol.success
 
     # fix some x
     fix_x = falses(size(case1.xdata))
     fix = [4, 8]
     fix_x[fix] .= true
-    sol = Odrpack.odr_fit(case1..., fix_x=fix_x)
+    sol = odr_fit(case1..., fix_x=fix_x)
     @test sol.delta[fix] ≈ zeros(length(fix))
 
     # fix some x, broadcast (m,)
     fix_x = falses(size(case3.xdata, 2))
     fix = [2]
     fix_x[fix] .= true
-    sol = Odrpack.odr_fit(case3..., fix_x=fix_x)
+    sol = odr_fit(case3..., fix_x=fix_x)
     @test sol.delta[:, fix] ≈ zeros(size(sol.delta, 1))
 
     # fix some x, broadcast (n,)
     fix_x = falses(size(case3.xdata, 1))
     fix = [2, 7, 13]
     fix_x[fix] .= true
-    sol = Odrpack.odr_fit(case3..., fix_x=fix_x)
+    sol = odr_fit(case3..., fix_x=fix_x)
     @test sol.delta[fix, :] ≈ zeros(length(fix), size(sol.delta, 2))
 
     # fix all x (n,)
     fix_x = trues(size(case1.xdata))
-    sol = Odrpack.odr_fit(case1..., fix_x=fix_x)
+    sol = odr_fit(case1..., fix_x=fix_x)
     @test sol.delta ≈ zeros(size(sol.delta))
 
     # fix all x (n, m)
     fix_x = trues(size(case3.xdata))
-    sol = Odrpack.odr_fit(case3..., fix_x=fix_x)
+    sol = odr_fit(case3..., fix_x=fix_x)
 
     # user-defined step_delta
-    sol3 = Odrpack.odr_fit(case3...)
+    sol3 = odr_fit(case3...)
     @test sol3.success
     for shape in (size(case3.xdata), size(case3.xdata, 1), size(case3.xdata, 2))
         step_delta = fill(1e-5, shape)
-        sol = Odrpack.odr_fit(case3..., step_delta=step_delta)
+        sol = odr_fit(case3..., step_delta=step_delta)
         @test sol.success
         @test all(isapprox.(sol.delta, sol3.delta, atol=1e-4))
     end
 
     # user-defined scale_delta
-    sol3 = Odrpack.odr_fit(case3...)
+    sol3 = odr_fit(case3...)
     @test sol3.success
     for shape in (size(case3.xdata),
         size(case3.xdata, 1),
         size(case3.xdata, 2))
         scale_delta = fill(10.0, shape)
-        sol = Odrpack.odr_fit(case3..., scale_delta=scale_delta)
+        sol = odr_fit(case3..., scale_delta=scale_delta)
         @test sol.success
         @test all(isapprox.(sol.delta, sol3.delta, atol=1e-4))
     end
@@ -246,34 +246,30 @@ end # "beta-related"
     # invalid fix_x shape
     @test_throws ArgumentError begin
         fix_x = [true, false, true]
-        Odrpack.odr_fit(case1..., fix_x=fix_x)
+        odr_fit(case1..., fix_x=fix_x)
     end
 
     # invalid step_delta shape
     @test_throws ArgumentError begin
         step_delta = [1e-4, 1.0]
-        Odrpack.odr_fit(case3..., step_delta=step_delta)
+        odr_fit(case3..., step_delta=step_delta)
     end
 
     # invalid scale_delta shape
     @test_throws ArgumentError begin
         scale_delta = [1.0, 1.0, 1.0, 1.0]
-        Odrpack.odr_fit(case3..., scale_delta=scale_delta)
+        odr_fit(case3..., scale_delta=scale_delta)
     end
 
     # invalid delta0 shape
     @test_throws ArgumentError begin
         delta0 = zeros(size(case1.ydata))
-        Odrpack.odr_fit(case3..., delta0=delta0)
+        odr_fit(case3..., delta0=delta0)
     end
 
 end # "delta0-related"
 
 @testset "weight_x" begin
-
-    # weight_x scalar
-    sol = Odrpack.odr_fit(case1..., weight_x=1e100)
-    @test all(isapprox.(sol.delta, zeros(size(sol.delta)), atol=1e-90))
 
     # weight_x scalar
     sol = odr_fit(case1..., weight_x=1e100)
@@ -340,3 +336,71 @@ end # "delta0-related"
     @test_throws ArgumentError odr_fit(case3..., weight_x=weight_x)
 
 end # "weight_x"
+
+@testset "weight_y" begin
+
+    # weight_y scalar
+    sol = odr_fit(case1..., weight_y=1e100)
+    @test all(isapprox.(sol.eps, zeros(size(sol.eps)), atol=1e-10))
+
+    # weight_y (n,) and q=1
+    weight_y = ones(size(case1.ydata))
+    fix = [5, 8]
+    weight_y[fix] .= 1e100
+    sol = odr_fit(case1..., weight_y=weight_y)
+    @test all(isapprox.(sol.eps[fix], zeros(size(sol.eps[fix])), atol=1e-10))
+
+    # weight_y (n, q)
+    weight_y = ones(size(case3.ydata))
+    fix = [5, 14]
+    weight_y[fix, :] .= 1e100
+    sol = odr_fit(case3..., weight_y=weight_y)
+    sol1 = deepcopy(sol)
+    @test all(isapprox.(sol.eps[fix, :], zeros(size(sol.eps[fix, :])), atol=1e-10))
+
+    # weight_y (n, 1, q)
+    weight_y = reshape(weight_y, size(weight_y, 1), 1, size(weight_y, 2))
+    sol = odr_fit(case3..., weight_y=weight_y)
+    @test all(isapprox.(sol.delta, sol1.delta, atol=1e-50))
+    @test all(isapprox.(sol.eps, sol1.eps, atol=1e-50))
+
+    # weight_y (q,)
+    weight_y = ones(size(case3.ydata, 2))
+    fix = [1]
+    weight_y[fix] .= 1e100
+    sol = odr_fit(case3..., weight_y=weight_y)
+    sol1 = deepcopy(sol)
+    @test all(isapprox.(sol.eps[:, fix], zeros(size(sol.eps[:, fix])), atol=1e-10))
+
+    # weight_y (1, 1, q)
+    weight_y = reshape(weight_y, 1, 1, size(weight_y, 1))
+    sol = odr_fit(case3..., weight_y=weight_y)
+    @test all(isapprox.(sol.delta, sol1.delta, atol=1e-50))
+    @test all(isapprox.(sol.eps, sol1.eps, atol=1e-50))
+
+    # weight_y (q, q)
+    q = size(case3.ydata, 2)
+    weight_y = [i == j ? 1.0 : 0.0 for i in 1:q, j in 1:q]
+    fix = [1]
+    weight_y[fix, fix] .= 1e100
+    sol = odr_fit(case3..., weight_y=weight_y)
+    sol1 = deepcopy(sol)
+    @test all(isapprox.(sol.eps[:, fix], zeros(size(sol.eps[:, fix])), atol=1e-10))
+
+    # weight_y (1, q, q)
+    weight_y = reshape(weight_y, 1, size(weight_y, 1), size(weight_y, 2))
+    sol = odr_fit(case3..., weight_y=weight_y)
+    @test all(isapprox.(sol.delta, sol1.delta, atol=1e-50))
+    @test all(isapprox.(sol.eps, sol1.eps, atol=1e-50))
+
+    # weight_y (n, q, q)
+    weight_y = repeat(weight_y, size(case3.ydata, 1), 1, 1)
+    sol = odr_fit(case3..., weight_y=weight_y)
+    @test all(isapprox.(sol.delta, sol1.delta, atol=1e-50))
+    @test all(isapprox.(sol.eps, sol1.eps, atol=1e-50))
+
+    # weight_y has invalid shape
+    weight_y = ones(1, 1, 1)
+    @test_throws ArgumentError odr_fit(case3..., weight_y=weight_y)
+
+end # "weight_y"
