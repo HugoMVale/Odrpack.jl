@@ -584,14 +584,14 @@ function odr_fit(
                     y = unsafe_wrap(Vector{Float64}, y_ptr, n)
                 end
                 f!(xplusd, beta, y)
-            elseif (div(ideval, 10)) % 10 > 0
+            end
+            if div(ideval, 10) % 10 > 0
                 jacb = unsafe_wrap(Array{Float64}, jacb_ptr, (n, np, q))
                 jac_beta!(xplusd, beta, jacb)
-            elseif (div(ideval, 100)) % 10 > 0
+            end
+            if div(ideval, 100) % 10 > 0
                 jacd = unsafe_wrap(Array{Float64}, jacd_ptr, (n, m, q))
-                jac_x!(xplusd, jacd)
-            else
-                error("The value of `ideval` is not valid.")
+                jac_x!(xplusd, beta, jacd)
             end
         catch e
             if isa(e, OdrStop)
