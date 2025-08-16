@@ -522,10 +522,10 @@ function odr_fit(
     step_delta_ptr = step_delta === nothing ? C_NULL : pointer(step_delta)
     scale_beta_ptr = scale_beta === nothing ? C_NULL : pointer(scale_beta)
     scale_delta_ptr = scale_delta === nothing ? C_NULL : pointer(scale_delta)
-    ndigit_ptr = ndigit === nothing ? C_NULL : pointer(ndigit)
-    taufac_ptr = taufac === nothing ? C_NULL : pointer(taufac)
-    sstol_ptr = sstol === nothing ? C_NULL : pointer(sstol)
-    partol_ptr = partol === nothing ? C_NULL : pointer(partol)
+    ndigit_ptr = ndigit === nothing ? C_NULL : Ref(ndigit)
+    taufac_ptr = taufac === nothing ? C_NULL : Ref(taufac)
+    sstol_ptr = sstol === nothing ? C_NULL : Ref(sstol)
+    partol_ptr = partol === nothing ? C_NULL : Ref(partol)
 
     # Open files
     lunrpt = Ref{Int32}(6)
@@ -704,18 +704,18 @@ function odr_fit(
         ydata + eps,
         sd_beta,
         cov_beta,
-        rwork[rwidx.rvar],
-        iwork[iwidx.nfev],
-        iwork[iwidx.njev],
-        iwork[iwidx.niter],
-        iwork[iwidx.irank],
-        rwork[rwidx.rcond],
+        rwork[rwidx.rvar+1],
+        iwork[iwidx.nfev+1],
+        iwork[iwidx.njev+1],
+        iwork[iwidx.niter+1],
+        iwork[iwidx.irank+1],
+        rwork[rwidx.rcond+1],
         Int(info[]),
         get_stopreason_message(info[]),
         info[] < 4,
-        rwork[rwidx.wss],
-        rwork[rwidx.wssdel],
-        rwork[rwidx.wsseps],
+        rwork[rwidx.wss+1],
+        rwork[rwidx.wssdel+1],
+        rwork[rwidx.wsseps+1],
         iwork,
         rwork
     )
