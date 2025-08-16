@@ -404,3 +404,32 @@ end # "weight_x"
     @test_throws ArgumentError odr_fit(case3..., weight_y=weight_y)
 
 end # "weight_y"
+
+@testset "parameters" begin
+
+    # maxit
+    sol = odr_fit(case1..., maxit=2)
+    @test sol.info == 4
+    @test occursin("iteration limit", lowercase(sol.stopreason))
+
+    # sstol
+    sstol = 0.123
+    sol = odr_fit(case1..., sstol=sstol)
+    @test sol.info == 1
+    rwork_idx = Odrpack.loc_rwork(length(case1.xdata), 1, 1, length(case1.beta0), 1, 1, true)
+    @test isapprox(sol._rwork[rwork_idx.sstol+1], sstol)
+
+    # partol
+    partol = 0.456
+    sol = odr_fit(case1..., partol=partol)
+    @test sol.info == 2
+    @test isapprox(sol._rwork[rwork_idx.partol+1], partol)
+
+    # taufac
+    taufac = 0.6969
+    sol = odr_fit(case1..., taufac=taufac)
+    @test sol.info == 1
+    @test isapprox(sol._rwork[rwork_idx.taufac+1], taufac)
+
+end # "parameters"
+
