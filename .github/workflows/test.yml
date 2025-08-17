@@ -38,23 +38,25 @@ jobs:
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
 
-    #   - name: Process coverage
+      - name: Process coverage
+        if: ${{ matrix.julia-version == 'lts' && matrix.os == 'ubuntu-latest' }}
+        uses: julia-actions/julia-processcoverage@v1
+
+    #   - name: Show coverage
     #     if: ${{ matrix.julia-version == 'lts' && matrix.os == 'ubuntu-latest' }}
-    #     uses: julia-actions/julia-processcoverage@v1
+    #     run: cat lcov.info | head -n 40
 
-      - name: Process coverage (manual)
-        if: ${{ matrix.julia-version == 'lts' && matrix.os == 'ubuntu-latest' }}
-        run: |
-          julia --project -e 'import Pkg; Pkg.add("Coverage");using Coverage; cov = process_folder(); LCOV.writefile("lcov.info", cov, root=pwd())'
+    #   - name: Upload coverage to Codecov
+    #     if: ${{ matrix.julia-version == 'lts' && matrix.os == 'ubuntu-latest' }}
+    #     uses: codecov/codecov-action@v5
+    #     with:
+    #       token: ${{ secrets.CODECOV_TOKEN }}
+    #       verbose: true
+    #       files: lcov.info
 
-      - name: Show coverage
+      - name: Upload coverage to coveralls.io
         if: ${{ matrix.julia-version == 'lts' && matrix.os == 'ubuntu-latest' }}
-        run: cat lcov.info | head -n 40
-
-      - name: Upload coverage to Codecov
-        if: ${{ matrix.julia-version == 'lts' && matrix.os == 'ubuntu-latest' }}
-        uses: codecov/codecov-action@v5
+        uses: coverallsapp/github-action@master
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          verbose: true
-          files: lcov.info
+          path-to-lcov: lcov.info
+          github-token: ${{ secrets.GITHUB_TOKEN }}
