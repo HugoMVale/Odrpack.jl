@@ -22,8 +22,8 @@ jobs:
           - 'pre'
         os:
           - ubuntu-latest
-          #- windows-latest
-          #- macOS-latest
+          - windows-latest
+          - macOS-latest
         exclude:
           - os: macOS-latest
             version: 'lts'
@@ -57,4 +57,4 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          verbose: true
+          verbose: false
