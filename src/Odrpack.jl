@@ -681,8 +681,6 @@ function odr_fit(
     iwidx = loc_iwork(m, q, np)
     rwidx = loc_rwork(n, m, q, np, ldwe, ld2we, is_odr)
 
-    # Return the result
-
     # Extract results without messing up the original work arrays
     i0_eps = rwidx.eps
     eps = copy(rwork[(i0_eps+1):(i0_eps+n*q)])
