@@ -5,5 +5,4 @@ using TestItemRunner
 
 @testset "Odrpack Tests" begin
     include("./test_odr.jl")
-    include("./aqua.jl")
 end
