@@ -24,12 +24,7 @@ jobs:
           - ubuntu-latest
           - windows-latest
           - macOS-latest
-        exclude:
-          - os: macOS-latest
-            version: 'lts'
-        # include:
-        #   - os: macOS-13
-        #     version: 'lts'
+          - macOS-13
 
     steps:
       - name: Checkout code
