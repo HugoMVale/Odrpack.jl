@@ -8,4 +8,4 @@ odrpack_jll = "d4b606b2-00e0-534d-b821-fa459008cf27"
 
 [compat]
 odrpack_jll = "2.0.3"
- 
+julia = "1.6"
