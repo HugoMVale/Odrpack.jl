@@ -48,12 +48,12 @@ jobs:
 
       - name: Run tests with coverage
         uses: julia-actions/julia-runtest@v1
-        with:
-          test_args: '--coverage'
+        # with:
+        #   test_args: '--coverage'
 
       - name: Upload coverage to Codecov
-        if: ${{ matrix.version == 'lts' }} && ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.version == 'lts' && matrix.os == 'ubuntu-latest' }}
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          verbose: false
+          verbose: true
