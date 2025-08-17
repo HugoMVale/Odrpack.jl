@@ -50,7 +50,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: ${{ matrix.version == 'lts' && matrix.os == 'ubuntu-latest' }}
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: false
