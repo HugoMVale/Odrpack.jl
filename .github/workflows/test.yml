@@ -42,18 +42,6 @@ jobs:
         if: ${{ matrix.julia-version == 'lts' && matrix.os == 'ubuntu-latest' }}
         uses: julia-actions/julia-processcoverage@v1
 
-    #   - name: Show coverage
-    #     if: ${{ matrix.julia-version == 'lts' && matrix.os == 'ubuntu-latest' }}
-    #     run: cat lcov.info | head -n 40
-
-    #   - name: Upload coverage to Codecov
-    #     if: ${{ matrix.julia-version == 'lts' && matrix.os == 'ubuntu-latest' }}
-    #     uses: codecov/codecov-action@v5
-    #     with:
-    #       token: ${{ secrets.CODECOV_TOKEN }}
-    #       verbose: true
-    #       files: lcov.info
-
       - name: Upload coverage to coveralls.io
         if: ${{ matrix.julia-version == 'lts' && matrix.os == 'ubuntu-latest' }}
         uses: coverallsapp/github-action@master
