@@ -9,17 +9,3 @@ odrpack_jll = "d4b606b2-00e0-534d-b821-fa459008cf27"
 [compat]
 odrpack_jll = "2.0.3"
  
-[platforms]
-aarch64-apple-darwin = false
-aarch64-linux-gnu = false
-aarch64-unknown-freebsd = false
-armv6l-linux-gnueabihf = false
-armv7l-linux-gnueabihf = false
-i686-linux-gnu = false
-i686-w64-mingw32 = false
-powerpc64le-linux-gnu = false
-riscv64-linux-gnu = false
-x86_64-apple-darwin = false
-x86_64-linux-gnu = false
-x86_64-unknown-freebsd = false
-x86_64-w64-mingw32 = false
