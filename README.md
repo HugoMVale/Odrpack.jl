@@ -1,6 +1,7 @@
 # Odrpack.jl
 
 [![Test](https://github.com/HugoMVale/Odrpack.jl/actions/workflows/test.yml/badge.svg)](https://github.com/HugoMVale/Odrpack.jl/actions)
+[![codecov](https://codecov.io/gh/HugoMVale/Odrpack.jl/graph/badge.svg?token=pec9zA3pQY)](https://codecov.io/gh/HugoMVale/Odrpack.jl)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/HugoMVale/Odrpack.jl)
 
 ## Description
