@@ -11,15 +11,15 @@ odrpack_jll = "2.0.3"
  
 [platforms]
 aarch64-apple-darwin = false
-aarch64-linux-gnu = true
-aarch64-unknown-freebsd = true
-armv6l-linux-gnueabihf = true
-armv7l-linux-gnueabihf = true
-i686-linux-gnu = true
-i686-w64-mingw32 = true
-powerpc64le-linux-gnu = true
-riscv64-linux-gnu = true
+aarch64-linux-gnu = false
+aarch64-unknown-freebsd = false
+armv6l-linux-gnueabihf = false
+armv7l-linux-gnueabihf = false
+i686-linux-gnu = false
+i686-w64-mingw32 = false
+powerpc64le-linux-gnu = false
+riscv64-linux-gnu = false
 x86_64-apple-darwin = false
-x86_64-linux-gnu = true
-x86_64-unknown-freebsd = true
+x86_64-linux-gnu = false
+x86_64-unknown-freebsd = false
 x86_64-w64-mingw32 = false
