@@ -5,6 +5,13 @@ using .OdrpackAux
 
 export OdrResult, OdrStop, odr_fit
 
+function __init__()
+    if Sys.isapple() && Sys.ARCH == :aarch64
+        error("""Odrpack.jl is currently not supported on macOS ARM (Apple Silicon). 
+        << cfunction: closures are not supported on this platform >>""")
+    end
+end
+
 """
     OdrResult
 
