@@ -193,7 +193,7 @@ function loc_rwork(n::Integer, m::Integer, q::Integer, np::Integer, ldwe::Intege
 end
 
 """
-    open_file(filename::AbstractString, lun::Ref{Int32})
+    open_file(filename, lun) -> Int32
 
 Open a new file associated with a specified logical unit number.
 
@@ -220,7 +220,7 @@ end
 
 
 """
-    close_file(lun::Ref{Int32})
+    close_file(lun) -> Int32
 
 Close a file associated with a specified logical unit number.
 
