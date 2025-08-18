@@ -38,6 +38,7 @@ using Odrpack
 
 function f!(x::Vector{Float64}, beta::Vector{Float64}, y::Vector{Float64})
     y .= beta[1] .* exp.(beta[2] .* x)
+    return nothing
 end
 
 xdata = [0.982, 1.998, 4.978, 6.01]

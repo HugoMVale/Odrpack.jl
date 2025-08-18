@@ -65,11 +65,13 @@ struct OdrResult
 end
 
 """
+    get_stopreason_message(info) -> String
+
 Return a human-readable message based on the stopping condition returned by `odrpack` in 
 the `info` argument of the result.
 
 # Arguments
-- `info::Int`: value of the `info` argument returned by `odrpack`. This value is used to
+- `info::Integer`: value of the `info` argument returned by `odrpack`. This value is used to
   determine the stopping condition.
 
 # Returns
@@ -254,6 +256,37 @@ known as errors-in-variables regression.
 [2] Jason W. Zwolak, Paul T. Boggs, and Layne T. Watson. User's Reference
     Guide for ODRPACK95, 2005.
     https://github.com/HugoMVale/odrpack95/blob/main/original/Doc/guide.pdf
+
+# Examples
+```
+using Odrpack
+
+function f!(x::Vector{Float64}, beta::Vector{Float64}, y::Vector{Float64})
+    y .= beta[1] .* exp.(beta[2] .* x)
+    return nothing
+end
+
+xdata = [0.982, 1.998, 4.978, 6.01]
+ydata = [2.7, 7.4, 148.0, 403.0]
+
+beta0 = [2.0, 0.5]
+bounds = ([0.0, 0.0], [10.0, 0.9])
+
+sol = odr_fit(
+    f!,
+    xdata,
+    ydata,
+    beta0,
+    bounds=bounds,
+    # rptfile="test_output.txt",
+    # report="long"
+)
+
+println("Optimized β    :", sol.beta)
+println("Optimized δ    :", sol.delta)
+println("Optimized x + δ:", sol.xplusd)
+ 
+```
 """
 function odr_fit(
     f!::Function,
