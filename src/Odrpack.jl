@@ -1,7 +1,7 @@
 module Odrpack
 
-include("OdrpackAux.jl")
-using .OdrpackAux
+include("Aux.jl")
+using .Aux
 
 export OdrResult, OdrStop, odr_fit
 
@@ -64,34 +64,7 @@ struct OdrResult
     _rwork::Vector{Float64}
 end
 
-"""
-    get_stopreason_message(info) -> String
 
-Return a human-readable message based on the stopping condition returned by `odrpack` in 
-the `info` argument of the result.
-
-# Arguments
-- `info::Integer`: value of the `info` argument returned by `odrpack`. This value is used to
-  determine the stopping condition.
-
-# Returns
-- `::String`: human-readable string describing the stopping condition.
-"""
-function get_stopreason_message(info::Integer)::String
-    message = ""
-    if info == 1
-        message = "Sum of squares convergence."
-    elseif info == 2
-        message = "Parameter convergence."
-    elseif info == 3
-        message = "Sum of squares and parameter convergence."
-    elseif info == 4
-        message = "Iteration limit reached."
-    elseif info >= 5
-        message = "Questionable results or fatal errors detected. See report and error message."
-    end
-    return message
-end
 
 """
     OdrStop <: Exception
@@ -665,7 +638,7 @@ function odr_fit(
 
     # Call the Fortran function
     info = Ref{Cint}(-1)
-    @ccall odrpack.odr_long_c(
+    @ccall lib.odr_long_c(
         fcn_c::Ptr{Cvoid},
         n::Ref{Cint},
         m::Ref{Cint},
