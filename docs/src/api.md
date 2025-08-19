@@ -7,5 +7,5 @@ CurrentModule = Odrpack
 API for [Odrpack](https://github.com/HugoMVale/Odrpack.jl).
 
 ```@autodocs
-Modules = [Odrpack, Aux]
+Modules = [Odrpack, Auxiliary]
 ```
