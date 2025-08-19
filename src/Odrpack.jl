@@ -1,7 +1,7 @@
 module Odrpack
 
-include("./Aux.jl")
-using .Aux
+include("Auxiliary.jl")
+using .Auxiliary
 
 export OdrResult, OdrStop, odr_fit
 

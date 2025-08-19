@@ -4,7 +4,7 @@ Auxiliary functions for `odrpack`.
 This module provides a Julia interface to the auxiliary routines from the
 [`odrpack`](https://github.com/HugoMVale/odrpack95) library.
 """
-module Aux
+module Auxiliary
 
 import odrpack_jll
 const lib = odrpack_jll.libodrpack95
