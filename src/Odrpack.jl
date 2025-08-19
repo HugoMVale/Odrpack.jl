@@ -1,6 +1,6 @@
 module Odrpack
 
-include("Aux.jl")
+include("./Aux.jl")
 using .Aux
 
 export OdrResult, OdrStop, odr_fit
