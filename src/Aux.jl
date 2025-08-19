@@ -4,12 +4,43 @@ Auxiliary functions for `odrpack`.
 This module provides a Julia interface to the auxiliary routines from the
 [`odrpack`](https://github.com/HugoMVale/odrpack95) library.
 """
-module OdrpackAux
+module Aux
 
 import odrpack_jll
-const odrpack = odrpack_jll.libodrpack95
+const lib = odrpack_jll.libodrpack95
 
-export workspace_dimensions, loc_iwork, loc_rwork, open_file, close_file, odrpack
+export workspace_dimensions, loc_iwork, loc_rwork, open_file, close_file, lib,
+    get_stopreason_message
+
+
+"""
+    get_stopreason_message(info) -> String
+
+Return a human-readable message based on the stopping condition returned by `odrpack` in 
+the `info` argument of the result.
+
+# Arguments
+- `info::Integer`: value of the `info` argument returned by `odrpack`. This value is used to
+  determine the stopping condition.
+
+# Returns
+- `::String`: human-readable string describing the stopping condition.
+"""
+function get_stopreason_message(info::Integer)::String
+    message = ""
+    if info == 1
+        message = "Sum of squares convergence."
+    elseif info == 2
+        message = "Parameter convergence."
+    elseif info == 3
+        message = "Sum of squares and parameter convergence."
+    elseif info == 4
+        message = "Iteration limit reached."
+    elseif info >= 5
+        message = "Questionable results or fatal errors detected. See report and error message."
+    end
+    return message
+end
 
 
 """
@@ -25,14 +56,15 @@ Calculate the dimensions of the workspace arrays required by the underlying Fort
 - `isodr::Bool`: Variable designating whether the solution is by ODR (`true`) or by OLS (`false`).
 
 # Returns
-- `Tuple{Int32, Int32}`: A tuple containing the lengths of the work arrays (`lrwork`, `liwork`).
+- `Tuple{Int32, Int32}`: A tuple containing the lengths of the real and integer work arrays 
+  (`lrwork`, `liwork`).
 """
 function workspace_dimensions(n::Integer, m::Integer, q::Integer, np::Integer, isodr::Bool)::Tuple{Int32,Int32}
 
     lrwork = Ref{Int32}()
     liwork = Ref{Int32}()
 
-    @ccall odrpack.workspace_dimensions_c(
+    @ccall lib.workspace_dimensions_c(
         n::Ref{Cint},
         m::Ref{Cint},
         q::Ref{Cint},
@@ -45,6 +77,7 @@ function workspace_dimensions(n::Integer, m::Integer, q::Integer, np::Integer, i
     return lrwork[], liwork[]
 
 end
+
 
 struct Iworkidx
     msgb::Cint
@@ -90,7 +123,7 @@ function loc_iwork(m::Integer, q::Integer, np::Integer)::Iworkidx
 
     iwi = Ref{Iworkidx}()
 
-    @ccall odrpack.loc_iwork_c(
+    @ccall lib.loc_iwork_c(
         m::Ref{Cint},
         q::Ref{Cint},
         np::Ref{Cint},
@@ -100,6 +133,7 @@ function loc_iwork(m::Integer, q::Integer, np::Integer)::Iworkidx
     return iwi[]
 
 end
+
 
 struct Rworkidx
     delta::Cint
@@ -156,6 +190,7 @@ struct Rworkidx
     lrwkmin::Cint
 end
 
+
 """
     loc_rwork(n, m, q, np, ldwe, ld2we, isodr) -> Rworkidx
 
@@ -168,29 +203,30 @@ Get storage locations within the real work space.
 - `np::Integer`: Number of function parameters.
 - `ldwe::Integer`: Leading dimension of the `we` array.
 - `ld2we::Integer`: Second dimension of the `we` array.
-- `is_odr::Bool`: Indicates whether the solution is by ODR (`true`) or by OLS (`false`).
+- `isodr::Bool`: Indicates whether the solution is by ODR (`true`) or by OLS (`false`).
 
 # Returns
 - `Rworkidx`: A structure containing the 0-based indexes of the real work array.
 """
-function loc_rwork(n::Integer, m::Integer, q::Integer, np::Integer, ldwe::Integer, ld2we::Integer, is_odr::Bool)::Rworkidx
+function loc_rwork(n::Integer, m::Integer, q::Integer, np::Integer, ldwe::Integer, ld2we::Integer, isodr::Bool)::Rworkidx
 
     rwi = Ref{Rworkidx}()
 
-    @ccall odrpack.loc_rwork_c(
+    @ccall lib.loc_rwork_c(
         n::Ref{Cint},
         m::Ref{Cint},
         q::Ref{Cint},
         np::Ref{Cint},
         ldwe::Ref{Cint},
         ld2we::Ref{Cint},
-        is_odr::Ref{Bool},
+        isodr::Ref{Bool},
         rwi::Ref{Rworkidx}
     )::Cvoid
 
     return rwi[]
 
 end
+
 
 """
     open_file(filename, lun) -> Int32
@@ -208,7 +244,7 @@ function open_file(filename::AbstractString, lun::Ref{Int32})::Int32
 
     ierr = Ref{Int32}(0)
 
-    @ccall odrpack.open_file(
+    @ccall lib.open_file(
         filename::Cstring,
         lun::Ref{Cint},
         ierr::Ref{Cint}
@@ -234,7 +270,7 @@ function close_file(lun::Ref{Int32})::Int32
 
     ierr = Ref{Int32}(0)
 
-    @ccall odrpack.close_file(
+    @ccall lib.close_file(
         lun::Ref{Cint},
         ierr::Ref{Cint}
     )::Cvoid
