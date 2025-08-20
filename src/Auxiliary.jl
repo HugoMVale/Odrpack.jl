@@ -1,7 +1,7 @@
 """
 Auxiliary functions for `odrpack`.
 
-This module provides a Julia interface to the auxiliary routines from the
+This module provides a Julia interface to the auxiliary routines from the Fortran
 [`odrpack`](https://github.com/HugoMVale/odrpack95) library.
 """
 module Auxiliary
