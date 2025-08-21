@@ -54,7 +54,7 @@ sol = odr_fit(
     beta0,
     bounds=bounds,
     # rptfile="test_output.txt",
-    # report="long"
+    # report=:long
 )
 
 println("Optimized β    :", sol.beta)
