@@ -9,7 +9,10 @@ makedocs(
     checkdocs=:none,
     pages=[
         "Home" => "index.md",
-        #"Examples" => "examples.md",
+        "Examples" => [
+            "./examples/explicit-model.md",
+            "./examples/implicit-model.md"
+        ],
         "API" => "api.md"
     ]
 )

@@ -20,9 +20,9 @@ pkg> add Odrpack
 
 ## Usage
 
-A basic fit can be performed by passing the model function, data, and initial parameter estimates to `odr_fit`.
+A basic fit can be performed by passing the model function, data, and initial parameter estimates to [`odr_fit`](@ref).
 
-```julia
+```@example usage
 using Odrpack
 
 function f!(x::Vector{Float64}, beta::Vector{Float64}, y::Vector{Float64})
@@ -43,11 +43,11 @@ sol = odr_fit(
     beta0,
     bounds=bounds,
     # rptfile="test_output.txt",
-    # report="long"
+    # report=:short
 )
 
-println("Optimized β    :", sol.beta)
-println("Optimized δ    :", sol.delta)
-println("Optimized x + δ:", sol.xplusd)
+println("Optimized β    : " , round.(sol.beta, sigdigits=5))
+println("Optimized δ    : ", round.(sol.delta, sigdigits=5))
+println("Optimized x + δ: ", round.(sol.xplusd, sigdigits=5))
 ```
 
