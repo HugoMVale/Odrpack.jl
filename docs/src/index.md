@@ -10,6 +10,11 @@ Orthogonal distance regression, also known as [errors-in-variables regression](h
 
     This package is still in early alpha stage, and APIs can change any time in the future. Discussions and potential use cases are extremely welcome!
 
+!!! note
+
+    This package is currently not supported on macOS ARM (Apple Silicon) due to an intrinsic 
+    [limitation of `@cFunction`](https://fms-lab.github.io/julia-doc-ja/v1.5/manual/calling-c-and-fortran-code.html#Closure-cfunctions). 
+
 ## Installation
 
 `Odrpack.jl` can be installed using the Julia package manager. From the Julia REPL, type `]` to enter the Pkg REPL mode and run:
