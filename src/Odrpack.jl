@@ -129,10 +129,10 @@ known as errors-in-variables regression.
   model parameters. The first array contains the lower bounds, and the second contains the upper
   bounds. By default, the bounds are set to negative and positive infinity, respectively, for 
   all elements of `beta`.
-- `task::String="explicit-ODR"`:
-  Specifies the regression task to be performed. `"explicit-ODR"` solves an orthogonal distance
-  regression problem with an explicit model. `"implicit-ODR"` handles models defined implicitly.
-  `"OLS"` performs ordinary least squares fitting.
+- `task::Symbol=:explicitODR`:
+  Specifies the regression task to be performed. `:explicitODR` solves an orthogonal distance
+  regression problem with an explicit model. `:implicitODR` handles models defined implicitly.
+  `:OLS` performs ordinary least squares fitting.
 - `fix_beta::Union{Vector{Bool},Nothing}=nothing`:
   Array with the same shape as `beta0`, specifying which elements of `beta` are to be held fixed.
   `true` means the parameter is fixed; `false` means it is adjustable. By default, all elements
@@ -142,7 +142,7 @@ known as errors-in-variables regression.
   Alternatively, it can be a rank-1 array of shape `(m,)` or `(n,)`, in which case it will be 
   broadcast along the other axis. `true` means the element is fixed; `false` means it is adjustable.
   By default, in orthogonal distance regression mode, all elements of `fix_x` are set to `false`.
-  In ordinary least squares mode (`task="OLS"`), all `xdata` values are automatically treated 
+  In ordinary least squares mode (`task=:OLS`), all `xdata` values are automatically treated 
   as fixed.
 - `jac_beta!::Union{Function,Nothing}=nothing`:
   Jacobian of the function to be fitted with respect to `beta`, with the signature `jac_beta!(x, beta, jb)`.
@@ -155,15 +155,15 @@ known as errors-in-variables regression.
 - `delta0::Union{VecOrMat{Float64},Nothing}=nothing`:
   Array with the same shape as `xdata`, containing the initial guesses of the errors in the 
   explanatory variable. By default, `delta0` is set to zero for all elements of `xdata`.
-- `diff_scheme::String="forward"`:
+- `diff_scheme::Symbol=:forward`:
   Finite difference scheme used to approximate the Jacobian matrices when the user does not 
-  provide `jac_beta!` and `jac_x!`. The default method is forward differences. Central 
-  differences are generally more accurate but require one additional `f!` evaluation per partial
-  derivative.
-- `report::String="none"`:
-  Specifies the level of computation reporting. `"none"` disables all output. `"short"` prints 
-  a brief initial and final summary. `"long"` provides a detailed initial and final summary. 
-  `"iteration"` outputs information at each iteration step in addition to the detailed summaries.
+  provide `jac_beta!` and `jac_x!`. The default method is forward (`:forward`) differences.
+  Central (`:central`) differences are generally more accurate but require one additional `f!`
+  evaluation per partial derivative.
+- `report::Symbol=:none`:
+  Specifies the level of computation reporting. `:none` disables all output. `:short` prints 
+  a brief initial and final summary. `:long` provides a detailed initial and final summary. 
+  `:iteration` outputs information at each iteration step in addition to the detailed summaries.
   This is useful for debugging or monitoring progress.
 - `maxit::Integer=50`:
   Maximum number of allowed iterations.
@@ -252,7 +252,7 @@ sol = odr_fit(
     beta0,
     bounds=bounds,
     # rptfile="test_output.txt",
-    # report="long"
+    # report=:long
 )
 
 println("Optimized β    :", sol.beta)
@@ -270,14 +270,14 @@ function odr_fit(
     weight_x::Union{Float64,Vector{Float64},Matrix{Float64},Array{Float64,3},Nothing}=nothing,
     weight_y::Union{Float64,Vector{Float64},Matrix{Float64},Array{Float64,3},Nothing}=nothing,
     bounds::Tuple{Union{Vector{Float64},Nothing},Union{Vector{Float64},Nothing}}=(nothing, nothing),
-    task::String="explicit-ODR",
+    task::Symbol=:explicitODR,
     fix_beta::Union{AbstractVector{Bool},Nothing}=nothing,
     fix_x::Union{AbstractVecOrMat{Bool},Nothing}=nothing,
     jac_beta!::Union{Function,Nothing}=nothing,
     jac_x!::Union{Function,Nothing}=nothing,
     delta0::Union{VecOrMat{Float64},Nothing}=nothing,
-    diff_scheme::String="forward",
-    report::String="none",
+    diff_scheme::Symbol=:forward,
+    report::Symbol=:none,
     maxit::Integer=50,
     ndigit::Union{Integer,Nothing}=nothing,
     taufac::Union{Float64,Nothing}=nothing,
@@ -467,7 +467,7 @@ function odr_fit(
         #
     elseif jac_beta! !== nothing && jac_x! !== nothing
         has_jac = true
-    elseif jac_beta! !== nothing && jac_x! === nothing && task == "OLS"
+    elseif jac_beta! !== nothing && jac_x! === nothing && task == :OLS
         has_jac = true
     else
         throw(ArgumentError("Invalid combination of `jac_beta!` and `jac_x!`."))
@@ -479,10 +479,10 @@ function odr_fit(
 
     # Set iprint flag
     iprint_mapping = Dict(
-        "none" => 0,
-        "short" => 1001,
-        "long" => 2002,
-        "iteration" => 2212
+        :none => 0,
+        :short => 1001,
+        :long => 2002,
+        :iteration => 2212
     )
     iprint = iprint_mapping[report]
 
@@ -490,11 +490,11 @@ function odr_fit(
     jobl = zeros(Int, 5)
 
     is_odr = true
-    if task == "explicit-ODR"
+    if task == :explicitODR
         jobl[1] = 0
-    elseif task == "implicit-ODR"
+    elseif task == :implicitODR
         jobl[1] = 1
-    elseif task == "OLS"
+    elseif task == :OLS
         jobl[1] = 2
         is_odr = false
     else
@@ -504,9 +504,9 @@ function odr_fit(
     if has_jac
         jobl[2] = 2
     else
-        if diff_scheme == "forward"
+        if diff_scheme == :forward
             jobl[2] = 0
-        elseif diff_scheme == "central"
+        elseif diff_scheme == :central
             jobl[2] = 1
         else
             throw(ArgumentError("Invalid value for `diff_scheme`: $(diff_scheme)."))

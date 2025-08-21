@@ -104,7 +104,7 @@ using .TestCases
 
     # invalid task
     @test_throws ArgumentError begin
-        odr_fit(case1..., task="invalid")
+        odr_fit(case1..., task=:invalid)
     end
 
 end # "base-cases"
@@ -435,7 +435,7 @@ end # "parameters"
 @testset "rptfile-and-errfile" begin
 
     # write to report file
-    for (report, rptsize) in zip(["none", "short"], [0, 2600])
+    for (report, rptsize) in zip([:none, :short], [0, 2600])
         rptfile = tempname()
         odr_fit(case1..., report=report, rptfile=rptfile)
         @test isfile(rptfile)
@@ -444,20 +444,20 @@ end # "parameters"
 
     # write to error file
     errfile = tempname()
-    odr_fit(case1..., report="short", errfile=errfile)
+    odr_fit(case1..., report=:short, errfile=errfile)
     @test isfile(errfile) # && filesize(errfile) > 0
 
     # write to report and error file
     rptfile = tempname()
     errfile = tempname()
-    odr_fit(case1..., report="short", rptfile=rptfile, errfile=errfile)
+    odr_fit(case1..., report=:short, rptfile=rptfile, errfile=errfile)
     @test isfile(rptfile) && filesize(rptfile) > 2500
     @test isfile(errfile) # && filesize(errfile) > 0
 
 end # "rptfile-and-errfile"
 
 @testset "OLS" begin
-    sol1 = odr_fit(case1..., task="OLS")
+    sol1 = odr_fit(case1..., task=:OLS)
     sol2 = odr_fit(case1..., weight_x=1e100)
 
     @test all(isapprox.(sol1.beta, sol2.beta, atol=1e-10))
@@ -499,7 +499,7 @@ end # "OLS"
         return nothing
     end
 
-    sol = odr_fit(f!, xdata, ydata, beta0, task="implicit-ODR")
+    sol = odr_fit(f!, xdata, ydata, beta0, task=:implicitODR)
     @test all(isapprox.(sol.beta, beta_ref, rtol=1e-5))
 
 end # "implicit-model"
@@ -551,7 +551,7 @@ end # "OdrStop-exception
     end
 
     # ODR without jacobian
-    for diff_scheme in ["forward", "central"]
+    for diff_scheme in [:forward, :central]
         sol = odr_fit(f!, xdata, ydata, beta0, bounds=bounds, diff_scheme=diff_scheme)
         @test all(isapprox.(sol.beta, beta_ref, rtol=1e-5))
         @test all(isapprox.(sol.delta, delta_ref, atol=1e-5))
@@ -565,7 +565,7 @@ end # "OdrStop-exception
 
     # OLS with jacobian
     sol1 = odr_fit(f!, xdata, ydata, beta0, weight_x=1e100)
-    sol2 = odr_fit(f!, xdata, ydata, beta0, (jac_beta!)=(jac_beta!), task="OLS")
+    sol2 = odr_fit(f!, xdata, ydata, beta0, (jac_beta!)=(jac_beta!), task=:OLS)
     @test all(isapprox.(sol2.beta, sol1.beta, rtol=1e-6))
     @test all(isapprox.(sol2.delta, zeros(length(xdata))))
 
@@ -576,6 +576,6 @@ end # "OdrStop-exception
     @test_throws ArgumentError odr_fit(f!, xdata, ydata, beta0, (jac_beta!)=jac_beta!)
 
     # invalid diff_scheme
-    @test_throws ArgumentError odr_fit(f!, xdata, ydata, beta0, diff_scheme="invalid")
+    @test_throws ArgumentError odr_fit(f!, xdata, ydata, beta0, diff_scheme=:invalid)
 
 end # "jac_beta-and-jac_x"
