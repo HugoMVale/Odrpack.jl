@@ -30,7 +30,7 @@ Pkg.add("Odrpack")
 
 ## Documentation and Usage
 
-The following example demonstrates a simple use of the package. For more comprehensive examples and explanations, please refer to the [documentation](https://hugomvale.github.io/odrpack-python/) pages.
+The following example demonstrates a simple use of the package. For more comprehensive examples and explanations, please refer to the [documentation](https://hugomvale.github.io/Odrpack.jl/) pages.
 
 ```julia
 using Odrpack
@@ -66,4 +66,5 @@ Optimized β    :[1.633376, 0.9]
 Optimized δ    :[-0.368861, -0.312730, 0.029286, 0.110314]
 Optimized x + δ:[0.613138, 1.685269, 5.007286, 6.120314]
 ```
+
 
