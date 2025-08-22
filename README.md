@@ -6,10 +6,9 @@
 
 ## Description
 
-This Julia package provides bindings for the well-known weighted orthogonal distance regression
-(ODR) solver [odrpack95]. 
+This Julia package provides bindings for the well-known weighted orthogonal distance regression (ODR) solver [odrpack95]. 
 
-ODR, also known as [errors-in-variables regression], is designed primarily for instances when both
+Orthogonal distance regression, also known as [errors-in-variables regression], is designed primarily for instances when both
 the explanatory and response variables have significant errors. 
 
 <p align="center">
@@ -31,7 +30,7 @@ Pkg.add("Odrpack")
 
 ## Documentation and Usage
 
-The following example demonstrates a simple use of the package. For more comprehensive examples and explanations, please refer to the [examples](./examples) notebooks.
+The following example demonstrates a simple use of the package. For more comprehensive examples and explanations, please refer to the [documentation](https://hugomvale.github.io/odrpack-python/) pages.
 
 ```julia
 using Odrpack
