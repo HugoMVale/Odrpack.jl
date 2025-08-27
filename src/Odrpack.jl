@@ -361,7 +361,7 @@ function odr_fit(
             ldifx = n
             fix_x = repeat(fix_x, 1, m)
         else
-            throw(ArgumentError("`fix_x` must either have the same shape as `xdata` or be a vector of length `m` or `n`. See page 26 of the ODRPACK95 User Guide."))
+            throw(ArgumentError("`fix_x` must either have the same shape as `xdata` or be a vector of length `m > 1` or `n`. See page 26 of the ODRPACK95 User Guide."))
         end
     end
 
@@ -376,7 +376,7 @@ function odr_fit(
             ldstpd = n
             step_delta = repeat(step_delta, 1, m)
         else
-            throw(ArgumentError("`step_delta` must either have the same shape as `xdata` or be a vector of length `m` or `n`. See page 31 of the ODRPACK95 User Guide."))
+            throw(ArgumentError("`step_delta` must either have the same shape as `xdata` or be a vector of length `m > 1` or `n`. See page 31 of the ODRPACK95 User Guide."))
         end
     end
 
@@ -391,7 +391,7 @@ function odr_fit(
             ldscld = n
             scale_delta = repeat(scale_delta, 1, m)
         else
-            throw(ArgumentError("`scale_delta` must either have the same shape as `xdata` or be a vector of length `m` or `n`. See page 32 of the ODRPACK95 User Guide."))
+            throw(ArgumentError("`scale_delta` must either have the same shape as `xdata` or be a vector of length `m > 1` or `n`. See page 32 of the ODRPACK95 User Guide."))
         end
     end
 
