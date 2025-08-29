@@ -6,15 +6,15 @@ This module provides a Julia interface to the auxiliary routines from the Fortra
 """
 module Auxiliary
 
-import odrpack_jll
-const lib = odrpack_jll.libodrpack95
+# import odrpack_jll
+# const lib = odrpack_jll.libodrpack95
+const lib = joinpath(@__DIR__, "../deps/libodrpack95.so")
 
-export workspace_dimensions, loc_iwork, loc_rwork, open_file, close_file, lib,
-    get_stopreason_message
+export workspace_dimensions, loc_iwork, loc_rwork, open_file, close_file, lib, stop_message
 
 
 """
-    get_stopreason_message(info) -> String
+    stop_message(info) -> String
 
 Return a human-readable message based on the stopping condition returned by `odrpack` in 
 the `info` argument of the result.
@@ -26,20 +26,18 @@ the `info` argument of the result.
 # Returns
 - `::String`: human-readable string describing the stopping condition.
 """
-function get_stopreason_message(info::Integer)::String
-    message = ""
-    if info == 1
-        message = "Sum of squares convergence."
-    elseif info == 2
-        message = "Parameter convergence."
-    elseif info == 3
-        message = "Sum of squares and parameter convergence."
-    elseif info == 4
-        message = "Iteration limit reached."
-    elseif info >= 5
-        message = "Questionable results or fatal errors detected. See report and error message."
-    end
-    return message
+function stop_message(info::Integer)::String
+
+    message = zeros(Cchar, 256)
+
+    @ccall lib.stop_message_c(
+        info::Cint,
+        message::Ptr{Cchar},
+        length(message)::Csize_t
+    )::Cvoid
+
+    return unsafe_string(pointer(message))
+
 end
 
 
