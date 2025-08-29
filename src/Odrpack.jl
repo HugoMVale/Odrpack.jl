@@ -722,7 +722,7 @@ function odr_fit(
         iwork[iwidx.irank+1],
         rwork[rwidx.rcond+1],
         Int(info[]),
-        get_stopreason_message(info[]),
+        stop_message(info[]),
         info[] < 4,
         rwork[rwidx.wss+1],
         rwork[rwidx.wssdel+1],
