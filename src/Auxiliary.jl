@@ -6,9 +6,9 @@ This module provides a Julia interface to the auxiliary routines from the Fortra
 """
 module Auxiliary
 
-# import odrpack_jll
-# const lib = odrpack_jll.libodrpack95
-const lib = joinpath(@__DIR__, "../deps/libodrpack95.so")
+import odrpack_jll
+const lib = odrpack_jll.libodrpack95
+# const lib = joinpath(@__DIR__, "../deps/libodrpack95.so")
 
 export workspace_dimensions, loc_iwork, loc_rwork, open_file, close_file, lib, stop_message
 
