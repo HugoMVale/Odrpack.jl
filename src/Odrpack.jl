@@ -607,27 +607,6 @@ function odr_fit(
 
     job = sum(jobl[i] * 10^(i - 1) for i in eachindex(jobl))
 
-    # Allocate work arrays (drop restart possibility)
-    lrwork, liwork = workspace_dimensions(n, m, q, np, is_odr)
-    rwork = zeros(Float64, lrwork)
-    iwork = zeros(Int32, liwork)
-
-    # Create pointers for optional arguments
-    ifixb_ptr = ifixb === nothing ? C_NULL : pointer(ifixb)
-    ifixx_ptr = ifixx === nothing ? C_NULL : pointer(ifixx)
-    lower_ptr = lower === nothing ? C_NULL : pointer(lower)
-    upper_ptr = upper === nothing ? C_NULL : pointer(upper)
-    weight_x_ptr = weight_x === nothing ? C_NULL : pointer(weight_x)
-    weight_y_ptr = weight_y === nothing ? C_NULL : pointer(weight_y)
-    step_beta_ptr = step_beta === nothing ? C_NULL : pointer(step_beta)
-    step_delta_ptr = step_delta === nothing ? C_NULL : pointer(step_delta)
-    scale_beta_ptr = scale_beta === nothing ? C_NULL : pointer(scale_beta)
-    scale_delta_ptr = scale_delta === nothing ? C_NULL : pointer(scale_delta)
-    ndigit_ptr = ndigit === nothing ? C_NULL : Ref(ndigit)
-    taufac_ptr = taufac === nothing ? C_NULL : Ref(taufac)
-    sstol_ptr = sstol === nothing ? C_NULL : Ref(sstol)
-    partol_ptr = partol === nothing ? C_NULL : Ref(partol)
-
     # Open files
     info = Ref{Cint}(-1)
     lunrpt = Ref{Int32}(6)
@@ -671,6 +650,27 @@ function odr_fit(
         Ptr{Cint},    # istop
         Ptr{Cvoid}    # thunk
     ))
+
+    # Allocate work arrays (drop restart possibility)
+    lrwork, liwork = workspace_dimensions(n, m, q, np, is_odr)
+    rwork = zeros(Float64, lrwork)
+    iwork = zeros(Int32, liwork)
+
+    # Create pointers for optional arguments
+    ifixb_ptr = ifixb === nothing ? C_NULL : Ref(ifixb, 1)
+    ifixx_ptr = ifixx === nothing ? C_NULL : Ref(ifixx, 1)
+    lower_ptr = lower === nothing ? C_NULL : Ref(lower, 1)
+    upper_ptr = upper === nothing ? C_NULL : Ref(upper, 1)
+    weight_x_ptr = weight_x === nothing ? C_NULL : Ref(weight_x, 1)
+    weight_y_ptr = weight_y === nothing ? C_NULL : Ref(weight_y, 1)
+    step_beta_ptr = step_beta === nothing ? C_NULL : Ref(step_beta, 1)
+    step_delta_ptr = step_delta === nothing ? C_NULL : Ref(step_delta, 1)
+    scale_beta_ptr = scale_beta === nothing ? C_NULL : Ref(scale_beta, 1)
+    scale_delta_ptr = scale_delta === nothing ? C_NULL : Ref(scale_delta, 1)
+    ndigit_ptr = ndigit === nothing ? C_NULL : Ref(ndigit)
+    taufac_ptr = taufac === nothing ? C_NULL : Ref(taufac)
+    sstol_ptr = sstol === nothing ? C_NULL : Ref(sstol)
+    partol_ptr = partol === nothing ? C_NULL : Ref(partol)
 
     # Create a Thunk object on the heap to hold the Julia functions and metadata
     thunk = Thunk(f!, jac_beta!, jac_x!, x_is_2d, y_is_2d)
