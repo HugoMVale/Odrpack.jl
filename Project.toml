@@ -7,5 +7,5 @@ version = "0.1.0"
 odrpack_jll = "d4b606b2-00e0-534d-b821-fa459008cf27"
 
 [compat]
-odrpack_jll = "2.0.3"
+odrpack_jll = "2.1.0"
 julia = "1.10"
