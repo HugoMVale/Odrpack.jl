@@ -5,13 +5,6 @@ using .Auxiliary
 
 export OdrResult, OdrStop, odr_fit
 
-function __init__()
-    if Sys.isapple() && Sys.ARCH == :aarch64
-        error("""Odrpack.jl is currently not supported on macOS ARM (Apple Silicon). 
-        << cfunction: closures are not supported on this platform >>""")
-    end
-end
-
 """
     OdrResult
 
@@ -78,6 +71,101 @@ struct OdrStop <: Exception
     msg::String
 end
 OdrStop() = OdrStop("OdrStop exception occurred.")
+
+
+"""
+    Thunk
+
+A mutable container used to pass around the model function, jacobians, and related information
+without creating a closure. `cFunction` does not support closures in certain platforms (e.g., 
+macOS ARM).
+
+# Fields
+- `f!::Function`  
+  The main function to be evaluated.
+
+- `jac_beta!::Union{Function,Nothing}`  
+  Optional Jacobian with respect to parameter(s) `β`. 
+
+- `jac_x!::Union{Function,Nothing}`  
+  Optional Jacobian with respect to input(s) `x`. 
+
+- `x_is_2d::Bool`  
+  Whether the input `x` is treated as a matrix (`true`) or a vector (`false`).
+
+- `y_is_2d::Bool`  
+  Whether the output `y = f(x, β)` is treated as a matrix (`true`) or a vector (`false`).
+"""
+mutable struct Thunk
+    f!::Function
+    jac_beta!::Union{Function,Nothing}
+    jac_x!::Union{Function,Nothing}
+    x_is_2d::Bool
+    y_is_2d::Bool
+end
+
+
+"""
+Callback function invoked from `odrpack` to evaluate the model function and, optionally, its
+Jacobians. The actual julia functions are stored in the `Thunk` struct, which is passed as a
+void pointer. This is used to call the appropriate functions without creating closures.
+"""
+function odr_callback!(
+    n_ptr::Ptr{Cint}, m_ptr::Ptr{Cint}, q_ptr::Ptr{Cint}, np_ptr::Ptr{Cint}, ldifx_ptr::Ptr{Cint},
+    beta_ptr::Ptr{Cdouble}, xplusd_ptr::Ptr{Cdouble}, ifixb_ptr::Ptr{Cint}, ifixx_ptr::Ptr{Cint},
+    ideval_ptr::Ptr{Cint}, y_ptr::Ptr{Cdouble}, jacb_ptr::Ptr{Cdouble}, jacd_ptr::Ptr{Cdouble},
+    istop_ptr::Ptr{Cint}, thunk_ptr::Ptr{Cvoid}
+)
+    # Dereference input pointers
+    n = unsafe_load(n_ptr)
+    m = unsafe_load(m_ptr)
+    q = unsafe_load(q_ptr)
+    np = unsafe_load(np_ptr)
+    ideval = unsafe_load(ideval_ptr)
+
+    # Retrieve Thunk
+    thunk = unsafe_pointer_to_objref(thunk_ptr)::Thunk
+
+    # Wrap input C-style arrays as Julia arrays
+    beta = unsafe_wrap(Vector{Float64}, beta_ptr, np)
+
+    if thunk.x_is_2d
+        xplusd = unsafe_wrap(Matrix{Float64}, xplusd_ptr, (n, m))
+    else
+        xplusd = unsafe_wrap(Vector{Float64}, xplusd_ptr, n)
+    end
+
+    # Evaluate model function and its Jacobians
+    unsafe_store!(istop_ptr, 0)
+    try
+        if ideval % 10 > 0
+            if thunk.y_is_2d
+                y = unsafe_wrap(Matrix{Float64}, y_ptr, (n, q))
+            else
+                y = unsafe_wrap(Vector{Float64}, y_ptr, n)
+            end
+            thunk.f!(xplusd, beta, y)
+        end
+        if div(ideval, 10) % 10 > 0
+            jacb = unsafe_wrap(Array{Float64}, jacb_ptr, (n, np, q))
+            thunk.jac_beta!(xplusd, beta, jacb)
+        end
+        if div(ideval, 100) % 10 > 0
+            jacd = unsafe_wrap(Array{Float64}, jacd_ptr, (n, m, q))
+            thunk.jac_x!(xplusd, beta, jacd)
+        end
+    catch e
+        if isa(e, OdrStop)
+            unsafe_store!(istop_ptr, 1)
+            println("Regression stopped by OdrStop exception: $(e.msg)")
+        else
+            rethrow(e)
+        end
+    end
+
+    return nothing
+end
+
 
 
 """
@@ -292,18 +380,18 @@ function odr_fit(
 )::OdrResult
 
     # Check xdata
-    x_is_matrix = false
+    x_is_2d = false
     m = 1
     if ndims(xdata) > 1
-        x_is_matrix = true
+        x_is_2d = true
         m = size(xdata, 2)
     end
 
     # Check ydata
-    y_is_matrix = false
+    y_is_2d = false
     q = 1
     if ndims(ydata) > 1
-        y_is_matrix = true
+        y_is_2d = true
         q = size(ydata, 2)
     end
 
@@ -541,6 +629,7 @@ function odr_fit(
     partol_ptr = partol === nothing ? C_NULL : Ref(partol)
 
     # Open files
+    info = Ref{Cint}(-1)
     lunrpt = Ref{Int32}(6)
     lunerr = Ref{Int32}(6)
 
@@ -564,62 +653,8 @@ function odr_fit(
         end
     end
 
-    # Julia (C-style) callback function
-    function fcn_jl!(
-        n_ptr::Ptr{Cint}, m_ptr::Ptr{Cint}, q_ptr::Ptr{Cint}, np_ptr::Ptr{Cint}, ldifx_ptr::Ptr{Cint},
-        beta_ptr::Ptr{Cdouble}, xplusd_ptr::Ptr{Cdouble}, ifixb_ptr::Ptr{Cint}, ifixx_ptr::Ptr{Cint},
-        ideval_ptr::Ptr{Cint}, y_ptr::Ptr{Cdouble}, jacb_ptr::Ptr{Cdouble}, jacd_ptr::Ptr{Cdouble},
-        istop_ptr::Ptr{Cint}
-    )
-        # Dereference input pointers
-        n = unsafe_load(n_ptr)
-        m = unsafe_load(m_ptr)
-        q = unsafe_load(q_ptr)
-        np = unsafe_load(np_ptr)
-        ideval = unsafe_load(ideval_ptr)
-
-        # Wrap input C-style arrays as Julia arrays
-        beta = unsafe_wrap(Vector{Float64}, beta_ptr, np)
-
-        if x_is_matrix
-            xplusd = unsafe_wrap(Matrix{Float64}, xplusd_ptr, (n, m))
-        else
-            xplusd = unsafe_wrap(Vector{Float64}, xplusd_ptr, n)
-        end
-
-        # Evaluate model function and its Jacobians
-        unsafe_store!(istop_ptr, 0)
-        try
-            if ideval % 10 > 0
-                if y_is_matrix
-                    y = unsafe_wrap(Matrix{Float64}, y_ptr, (n, q))
-                else
-                    y = unsafe_wrap(Vector{Float64}, y_ptr, n)
-                end
-                f!(xplusd, beta, y)
-            end
-            if div(ideval, 10) % 10 > 0
-                jacb = unsafe_wrap(Array{Float64}, jacb_ptr, (n, np, q))
-                jac_beta!(xplusd, beta, jacb)
-            end
-            if div(ideval, 100) % 10 > 0
-                jacd = unsafe_wrap(Array{Float64}, jacd_ptr, (n, m, q))
-                jac_x!(xplusd, beta, jacd)
-            end
-        catch e
-            if isa(e, OdrStop)
-                unsafe_store!(istop_ptr, 1)
-                println("Regression stopped by OdrStop exception: $(e.msg)")
-            else
-                rethrow(e)
-            end
-        end
-
-        return nothing
-    end
-
     # Create a C-callable function pointer for the Julia callback function
-    fcn_c = @cfunction($fcn_jl!, Cvoid, (
+    fcn = @cfunction(odr_callback!, Cvoid, (
         Ptr{Cint},    # n
         Ptr{Cint},    # m
         Ptr{Cint},    # q
@@ -633,53 +668,63 @@ function odr_fit(
         Ptr{Cdouble}, # f
         Ptr{Cdouble}, # fjacb
         Ptr{Cdouble}, # fjacd
-        Ptr{Cint}     # istop
+        Ptr{Cint},    # istop
+        Ptr{Cvoid}    # thunk
     ))
 
+    # Create a Thunk object on the heap to hold the Julia functions and metadata
+    thunk = Thunk(f!, jac_beta!, jac_x!, x_is_2d, y_is_2d)
+
     # Call the Fortran function
-    info = Ref{Cint}(-1)
-    @ccall lib.odr_long_c(
-        fcn_c::Ptr{Cvoid},
-        n::Ref{Cint},
-        m::Ref{Cint},
-        q::Ref{Cint},
-        np::Ref{Cint},
-        ldwe::Ref{Cint},
-        ld2we::Ref{Cint},
-        ldwd::Ref{Cint},
-        ld2wd::Ref{Cint},
-        ldifx::Ref{Cint},
-        ldstpd::Ref{Cint},
-        ldscld::Ref{Cint},
-        lrwork::Ref{Cint},
-        liwork::Ref{Cint},
-        beta::Ptr{Cdouble},
-        ydata::Ptr{Cdouble},
-        xdata::Ptr{Cdouble},
-        weight_y_ptr::Ptr{Cdouble},
-        weight_x_ptr::Ptr{Cdouble},
-        ifixb_ptr::Ptr{Cint},
-        ifixx_ptr::Ptr{Cint},
-        step_beta_ptr::Ptr{Cdouble},
-        step_delta_ptr::Ptr{Cdouble},
-        scale_beta_ptr::Ptr{Cdouble},
-        scale_delta_ptr::Ptr{Cdouble},
-        delta::Ptr{Cdouble},
-        lower_ptr::Ptr{Cdouble},
-        upper_ptr::Ptr{Cdouble},
-        rwork::Ptr{Cdouble},
-        iwork::Ptr{Cint},
-        job::Ref{Cint},
-        ndigit_ptr::Ptr{Cint},
-        taufac_ptr::Ptr{Cdouble},
-        sstol_ptr::Ptr{Cdouble},
-        partol_ptr::Ptr{Cdouble},
-        maxit::Ref{Cint},
-        iprint::Ref{Cint},
-        lunerr::Ref{Cint},
-        lunrpt::Ref{Cint},
-        info::Ref{Cint}
-    )::Cvoid
+    GC.@preserve thunk begin
+
+        thunk_ptr = pointer_from_objref(thunk)
+
+        @ccall lib.odr_long_c(
+            fcn::Ptr{Cvoid},
+            n::Ref{Cint},
+            m::Ref{Cint},
+            q::Ref{Cint},
+            np::Ref{Cint},
+            ldwe::Ref{Cint},
+            ld2we::Ref{Cint},
+            ldwd::Ref{Cint},
+            ld2wd::Ref{Cint},
+            ldifx::Ref{Cint},
+            ldstpd::Ref{Cint},
+            ldscld::Ref{Cint},
+            lrwork::Ref{Cint},
+            liwork::Ref{Cint},
+            beta::Ptr{Cdouble},
+            ydata::Ptr{Cdouble},
+            xdata::Ptr{Cdouble},
+            weight_y_ptr::Ptr{Cdouble},
+            weight_x_ptr::Ptr{Cdouble},
+            ifixb_ptr::Ptr{Cint},
+            ifixx_ptr::Ptr{Cint},
+            step_beta_ptr::Ptr{Cdouble},
+            step_delta_ptr::Ptr{Cdouble},
+            scale_beta_ptr::Ptr{Cdouble},
+            scale_delta_ptr::Ptr{Cdouble},
+            delta::Ptr{Cdouble},
+            lower_ptr::Ptr{Cdouble},
+            upper_ptr::Ptr{Cdouble},
+            rwork::Ptr{Cdouble},
+            iwork::Ptr{Cint},
+            job::Ref{Cint},
+            ndigit_ptr::Ptr{Cint},
+            taufac_ptr::Ptr{Cdouble},
+            sstol_ptr::Ptr{Cdouble},
+            partol_ptr::Ptr{Cdouble},
+            maxit::Ref{Cint},
+            iprint::Ref{Cint},
+            lunerr::Ref{Cint},
+            lunrpt::Ref{Cint},
+            info::Ref{Cint},
+            thunk_ptr::Ptr{Cvoid}
+        )::Cvoid
+
+    end
 
     # Close files
     if rptfile !== nothing
