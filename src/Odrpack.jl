@@ -74,7 +74,7 @@ OdrStop() = OdrStop("OdrStop exception occurred.")
 
 
 """
-    Thunk
+    Context
 
 A mutable container used to pass around the model function, jacobians, and related information
 without creating a closure. `cFunction` does not support closures in certain platforms (e.g., 
@@ -96,7 +96,7 @@ macOS ARM).
 - `y_is_2d::Bool`  
   Whether the output `y = f(x, β)` is treated as a matrix (`true`) or a vector (`false`).
 """
-mutable struct Thunk
+mutable struct Context
     f!::Function
     jac_beta!::Union{Function,Nothing}
     jac_x!::Union{Function,Nothing}
@@ -107,14 +107,14 @@ end
 
 """
 Callback function invoked from `odrpack` to evaluate the model function and, optionally, its
-Jacobians. The actual julia functions are stored in the `Thunk` struct, which is passed as a
+Jacobians. The actual julia functions are stored in the `Context` struct, which is passed as a
 void pointer. This is used to call the appropriate functions without creating closures.
 """
 function odr_callback!(
     n_ptr::Ptr{Cint}, m_ptr::Ptr{Cint}, q_ptr::Ptr{Cint}, np_ptr::Ptr{Cint}, ldifx_ptr::Ptr{Cint},
     beta_ptr::Ptr{Cdouble}, xplusd_ptr::Ptr{Cdouble}, ifixb_ptr::Ptr{Cint}, ifixx_ptr::Ptr{Cint},
     ideval_ptr::Ptr{Cint}, y_ptr::Ptr{Cdouble}, jacb_ptr::Ptr{Cdouble}, jacd_ptr::Ptr{Cdouble},
-    istop_ptr::Ptr{Cint}, thunk_ptr::Ptr{Cvoid}
+    istop_ptr::Ptr{Cint}, context_ptr::Ptr{Cvoid}
 )
     # Dereference input pointers
     n = unsafe_load(n_ptr)
@@ -123,13 +123,13 @@ function odr_callback!(
     np = unsafe_load(np_ptr)
     ideval = unsafe_load(ideval_ptr)
 
-    # Retrieve Thunk
-    thunk = unsafe_pointer_to_objref(thunk_ptr)::Thunk
+    # Retrieve Context
+    context = unsafe_pointer_to_objref(context_ptr)::Context
 
     # Wrap input C-style arrays as Julia arrays
     beta = unsafe_wrap(Vector{Float64}, beta_ptr, np)
 
-    if thunk.x_is_2d
+    if context.x_is_2d
         xplusd = unsafe_wrap(Matrix{Float64}, xplusd_ptr, (n, m))
     else
         xplusd = unsafe_wrap(Vector{Float64}, xplusd_ptr, n)
@@ -139,20 +139,20 @@ function odr_callback!(
     unsafe_store!(istop_ptr, 0)
     try
         if ideval % 10 > 0
-            if thunk.y_is_2d
+            if context.y_is_2d
                 y = unsafe_wrap(Matrix{Float64}, y_ptr, (n, q))
             else
                 y = unsafe_wrap(Vector{Float64}, y_ptr, n)
             end
-            thunk.f!(xplusd, beta, y)
+            context.f!(xplusd, beta, y)
         end
         if div(ideval, 10) % 10 > 0
             jacb = unsafe_wrap(Array{Float64}, jacb_ptr, (n, np, q))
-            thunk.jac_beta!(xplusd, beta, jacb)
+            context.jac_beta!(xplusd, beta, jacb)
         end
         if div(ideval, 100) % 10 > 0
             jacd = unsafe_wrap(Array{Float64}, jacd_ptr, (n, m, q))
-            thunk.jac_x!(xplusd, beta, jacd)
+            context.jac_x!(xplusd, beta, jacd)
         end
     catch e
         if isa(e, OdrStop)
@@ -648,7 +648,7 @@ function odr_fit(
         Ptr{Cdouble}, # fjacb
         Ptr{Cdouble}, # fjacd
         Ptr{Cint},    # istop
-        Ptr{Cvoid}    # thunk
+        Ptr{Cvoid}    # context
     ))
 
     # Allocate work arrays (drop restart possibility)
@@ -672,16 +672,17 @@ function odr_fit(
     sstol_ptr = sstol === nothing ? C_NULL : Ref(sstol)
     partol_ptr = partol === nothing ? C_NULL : Ref(partol)
 
-    # Create a Thunk object on the heap to hold the Julia functions and metadata
-    thunk = Thunk(f!, jac_beta!, jac_x!, x_is_2d, y_is_2d)
+    # Create a Context object on the heap to hold the Julia functions and metadata
+    context = Context(f!, jac_beta!, jac_x!, x_is_2d, y_is_2d)
 
     # Call the Fortran function
-    GC.@preserve thunk begin
+    GC.@preserve context begin
 
-        thunk_ptr = pointer_from_objref(thunk)
+        context_ptr = pointer_from_objref(context)
 
         @ccall lib.odr_long_c(
             fcn::Ptr{Cvoid},
+            context_ptr::Ptr{Cvoid},
             n::Ref{Cint},
             m::Ref{Cint},
             q::Ref{Cint},
@@ -720,8 +721,7 @@ function odr_fit(
             iprint::Ref{Cint},
             lunerr::Ref{Cint},
             lunrpt::Ref{Cint},
-            info::Ref{Cint},
-            thunk_ptr::Ptr{Cvoid}
+            info::Ref{Cint}
         )::Cvoid
 
     end
@@ -753,7 +753,7 @@ function odr_fit(
 
     # Return OdrResult   
     return OdrResult(
-        copy(beta),
+        beta,
         delta,
         eps,
         xdata + delta,
