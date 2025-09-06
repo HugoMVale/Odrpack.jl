@@ -1,86 +1,86 @@
 using Test
 using Odrpack
 
-module TestCases
+@testmodule TestCases begin
 
-export case1, case2, case3
+    using Random
 
-using Random
+    const SEED = 1234567890
+    const rng = Random.MersenneTwister(SEED)
 
-const SEED = 1234567890
-const rng = Random.MersenneTwister(SEED)
-
-function add_noise!(x::AbstractArray, noise::Real)
-    x .*= (1 .+ noise * (2 * rand(rng, size(x)...) .- 1))
-    return nothing
-end
-
-function create_case1()
-    # m=1, q=1
-    function f!(x::Vector{Float64}, beta::Vector{Float64}, y::Vector{Float64})
-        y .= beta[1] .+ beta[2] * x .+ beta[3] * x .^ 2 .+ beta[4] * x .^ 3
+    function add_noise!(x::AbstractArray, noise::Real)
+        x .*= (1 .+ noise * (2 * rand(rng, size(x)...) .- 1))
         return nothing
     end
 
-    beta_star = [1.0, -2.0, 0.1, -0.1]
-    xdata = collect(range(-10.0, 10.0, length=21))
-    ydata = zeros(size(xdata, 1))
-    f!(xdata, beta_star, ydata)
+    function create_case1()
+        # m=1, q=1
+        function f!(x::Vector{Float64}, beta::Vector{Float64}, y::Vector{Float64})
+            y .= beta[1] .+ beta[2] * x .+ beta[3] * x .^ 2 .+ beta[4] * x .^ 3
+            return nothing
+        end
 
-    add_noise!(xdata, 5e-2)
-    add_noise!(ydata, 10e-2)
+        beta_star = [1.0, -2.0, 0.1, -0.1]
+        xdata = collect(range(-10.0, 10.0, length=21))
+        ydata = zeros(size(xdata, 1))
+        f!(xdata, beta_star, ydata)
 
-    return (f=f!, xdata=xdata, ydata=ydata, beta0=zeros(length(beta_star)))
-end
+        add_noise!(xdata, 5e-2)
+        add_noise!(ydata, 10e-2)
 
-function create_case2()
-    # m=2, q=1
-    function f!(x::Matrix{Float64}, beta::Vector{Float64}, y::Vector{Float64})
-        y .= (beta[1] * x[:, 1]) .^ 3 .+ x[:, 2] .^ beta[2]
-        return nothing
+        return (f=f!, xdata=xdata, ydata=ydata, beta0=zeros(length(beta_star)))
     end
 
-    beta_star = [2.0, 2.0]
-    x1 = collect(range(-10.0, 10.0, length=41))
-    xdata = hcat(x1, (10 .+ x1 ./ 2))
-    ydata = zeros(size(xdata, 1))
-    f!(xdata, beta_star, ydata)
+    function create_case2()
+        # m=2, q=1
+        function f!(x::Matrix{Float64}, beta::Vector{Float64}, y::Vector{Float64})
+            y .= (beta[1] * x[:, 1]) .^ 3 .+ x[:, 2] .^ beta[2]
+            return nothing
+        end
 
-    add_noise!(xdata, 5e-2)
-    add_noise!(ydata, 10e-2)
+        beta_star = [2.0, 2.0]
+        x1 = collect(range(-10.0, 10.0, length=41))
+        xdata = hcat(x1, (10 .+ x1 ./ 2))
+        ydata = zeros(size(xdata, 1))
+        f!(xdata, beta_star, ydata)
 
-    return (f=f!, xdata=xdata, ydata=ydata, beta0=ones(length(beta_star)))
-end
+        add_noise!(xdata, 5e-2)
+        add_noise!(ydata, 10e-2)
 
-function create_case3()
-    # m=3, q=2
-    function f!(x::Matrix{Float64}, beta::Vector{Float64}, y::Matrix{Float64})
-        y[:, 1] .= (beta[1] * x[:, 1]) .^ 3 .+ x[:, 2] .^ beta[2] .+ exp.(x[:, 3] ./ 2)
-        y[:, 2] .= (beta[3] * x[:, 1]) .^ 2 .+ x[:, 2] .^ beta[2]
-        return nothing
+        return (f=f!, xdata=xdata, ydata=ydata, beta0=ones(length(beta_star)))
     end
 
-    beta_star = [1.0, 2.0, 3.0]
-    x1 = collect(range(-1.0, 1.0, length=31))
-    xdata = hcat(x1, exp.(x1), (x1 .^ 2))
-    ydata = zeros(size(xdata, 1), 2)
-    f!(xdata, beta_star, ydata)
+    function create_case3()
+        # m=3, q=2
+        function f!(x::Matrix{Float64}, beta::Vector{Float64}, y::Matrix{Float64})
+            y[:, 1] .= (beta[1] * x[:, 1]) .^ 3 .+ x[:, 2] .^ beta[2] .+ exp.(x[:, 3] ./ 2)
+            y[:, 2] .= (beta[3] * x[:, 1]) .^ 2 .+ x[:, 2] .^ beta[2]
+            return nothing
+        end
 
-    add_noise!(xdata, 5e-2)
-    add_noise!(ydata, 10e-2)
+        beta_star = [1.0, 2.0, 3.0]
+        x1 = collect(range(-1.0, 1.0, length=31))
+        xdata = hcat(x1, exp.(x1), (x1 .^ 2))
+        ydata = zeros(size(xdata, 1), 2)
+        f!(xdata, beta_star, ydata)
 
-    return (f=f!, xdata=xdata, ydata=ydata, beta0=[5.0, 5.0, 5.0])
+        add_noise!(xdata, 5e-2)
+        add_noise!(ydata, 10e-2)
+
+        return (f=f!, xdata=xdata, ydata=ydata, beta0=[5.0, 5.0, 5.0])
+    end
+
+    const c1 = create_case1()
+    const c2 = create_case2()
+    const c3 = create_case3()
+
 end
 
-const case1 = create_case1()
-const case2 = create_case2()
-const case3 = create_case3()
+@testitem "base-cases" setup = [TestCases] begin
 
-end # Cases
-
-using .TestCases
-
-@testset "base-cases" begin
+    case1 = TestCases.c1
+    case2 = TestCases.c2
+    case3 = TestCases.c3
 
     # Case 1
     sol1 = odr_fit(case1...)
@@ -109,7 +109,11 @@ using .TestCases
 
 end # "base-cases"
 
-@testset "beta-related" begin
+@testitem "beta-related" setup = [TestCases] begin
+
+    case1 = TestCases.c1
+    case2 = TestCases.c2
+    case3 = TestCases.c3
 
     # base case1
     sol1 = odr_fit(case1...)
@@ -176,7 +180,10 @@ end # "base-cases"
 
 end # "beta-related"
 
-@testset "delta0-related" begin
+@testitem "delta0-related" setup = [TestCases] begin
+
+    case1 = TestCases.c1
+    case3 = TestCases.c3
 
     # base case1
     sol1 = odr_fit(case1...)
@@ -227,7 +234,7 @@ end # "beta-related"
     @test sol3.success
     for shape in (size(case3.xdata), size(case3.xdata, 1), size(case3.xdata, 2))
         step_delta = fill(1e-5, shape)
-        sol = odr_fit(case3..., step_delta=step_delta)
+        local sol = odr_fit(case3..., step_delta=step_delta)
         @test sol.success
         @test all(isapprox.(sol.delta, sol3.delta, atol=1e-4))
     end
@@ -237,14 +244,14 @@ end # "beta-related"
     @test sol3.success
     for shape in (size(case3.xdata), size(case3.xdata, 1), size(case3.xdata, 2))
         scale_delta = fill(10.0, shape)
-        sol = odr_fit(case3..., scale_delta=scale_delta)
+        local sol = odr_fit(case3..., scale_delta=scale_delta)
         @test sol.success
         @test all(isapprox.(sol.delta, sol3.delta, atol=1e-4))
     end
 
     # invalid fix_x shape
     @test_throws ArgumentError begin
-        fix_x = [true, false, true]
+        local fix_x = [true, false, true]
         odr_fit(case1..., fix_x=fix_x)
     end
 
@@ -268,7 +275,10 @@ end # "beta-related"
 
 end # "delta0-related"
 
-@testset "weight_x" begin
+@testitem "weight_x" setup = [TestCases] begin
+
+    case1 = TestCases.c1
+    case3 = TestCases.c3
 
     # weight_x scalar
     sol = odr_fit(case1..., weight_x=1e100)
@@ -336,7 +346,10 @@ end # "delta0-related"
 
 end # "weight_x"
 
-@testset "weight_y" begin
+@testitem "weight_y" setup = [TestCases] begin
+
+    case1 = TestCases.c1
+    case3 = TestCases.c3
 
     # weight_y scalar
     sol = odr_fit(case1..., weight_y=1e100)
@@ -404,7 +417,9 @@ end # "weight_x"
 
 end # "weight_y"
 
-@testset "parameters" begin
+@testitem "parameters" setup = [TestCases] begin
+
+    case1 = TestCases.c1
 
     # maxit
     sol = odr_fit(case1..., maxit=2)
@@ -432,7 +447,9 @@ end # "weight_y"
 
 end # "parameters"
 
-@testset "rptfile-and-errfile" begin
+@testitem "rptfile-and-errfile" setup = [TestCases] begin
+
+    case1 = TestCases.c1
 
     # write to report file
     for (report, rptsize) in zip([:none, :short], [0, 2600])
@@ -456,7 +473,10 @@ end # "parameters"
 
 end # "rptfile-and-errfile"
 
-@testset "OLS" begin
+@testitem "OLS" setup = [TestCases] begin
+
+    case1 = TestCases.c1
+
     sol1 = odr_fit(case1..., task=:OLS)
     sol2 = odr_fit(case1..., weight_x=1e100)
 
@@ -464,7 +484,7 @@ end # "rptfile-and-errfile"
     @test all(isapprox.(sol1.delta, zeros(size(sol1.delta)), atol=1e-90))
 end # "OLS"
 
-@testset "implicit-model" begin
+@testitem "implicit-model" begin
 
     # "odrpack's example2"
     xdata = [0.50 -0.12;
@@ -504,7 +524,7 @@ end # "OLS"
 
 end # "implicit-model"
 
-@testset "OdrStop-exception" begin
+@testitem "OdrStop-exception" begin
     xdata = [1.0, 2.0, 3.0, 4.0]
     ydata = [1.0, 2.0, 3.0, 4.0]
     beta0 = [1.0, 1.0]
@@ -523,7 +543,7 @@ end # "implicit-model"
 
 end # "OdrStop-exception
 
-@testset "jac_beta-and-jac_x" begin
+@testitem "jac_beta-and-jac_x" begin
 
     # odrpack's example5
     xdata = [0.982, 1.998, 4.978, 6.01]
